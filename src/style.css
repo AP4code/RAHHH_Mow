@@ -1,0 +1,2322 @@
+/* Accent theme — every color below is driven by this palette. Defaults are
+   the app's original hand-picked purple, so nothing visually changes until
+   Settings > Appearance actually overrides these on :root (see main.js). */
+:root {
+    --accent-rgb: 139, 92, 246;
+    --accent: #8b5cf6;
+    --accent-dark: #7c3aed;
+    --accent-darker: #6d28d9;
+    --accent-light: #a78bfa;
+    --accent-light-rgb: 167, 139, 250;
+    --accent-lighter: #c4b5fd;
+    --accent-pale: #ddd6fe;
+    --accent-palest: #ede9fe;
+    --accent-palest-rgb: 237, 233, 254;
+    --accent-glow: #cbb6ff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    background: #0B0A12;
+    color: var(--accent-palest);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.app {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background: linear-gradient(180deg, rgba(24, 21, 46, 0.7), rgba(13, 11, 22, 0.85));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(var(--accent-rgb), 0.14);
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.25);
+    position: relative;
+    z-index: 1;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    margin-bottom: 16px;
+    width: fit-content;
+    background: linear-gradient(135deg, #ede9fe, #c4b5fd 55%, #f0abfc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-rgb), 0.18);
+    margin-bottom: 28px;
+}
+
+textarea {
+    width: 100%;
+    background: rgba(15, 14, 24, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 10px;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.status.running {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.status.stopped {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.28);
+}
+
+nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-btn {
+    background: transparent;
+    border: none;
+    border-left: 2px solid transparent;
+    color: rgba(var(--accent-palest-rgb), 0.55);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+textarea {
+    cursor: default;
+}
+
+textarea:focus {
+    cursor: text;
+}
+
+.nav-btn:hover {
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent-pale);
+}
+
+.nav-btn.active {
+    background: rgba(var(--accent-rgb), 0.16);
+    border-left-color: var(--accent);
+    color: white;
+}
+
+/* Main */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    min-height: 0;
+    position: relative;
+}
+
+.main>div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+button.primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+button.primary:hover {
+    background: var(--accent-light);
+}
+
+#logs {
+    font-family: monospace;
+    font-size: 13px;
+    padding: 6px 4px;
+}
+
+/* CUSTOM SCROLLBAR */
+
+textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+textarea::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-light);
+}
+
+textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+textarea::-webkit-scrollbar-thumb {
+    cursor: grab;
+}
+
+textarea::-webkit-scrollbar-thumb:active {
+    cursor: grabbing;
+}
+
+#settingsPage {
+    max-width: 1200px;
+    width: 100%;
+    align-self: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scrollbar-width: none;
+}
+
+/* #songsPage/#snacksPage do NOT scroll as one long page like #settingsPage
+   — their two halves (Settings / Queue) are separately-scrolling slide
+   panels within a fixed-height viewport, so the page itself must stay a
+   bounded flex column instead of growing to fit both stacked. See
+   .sr-slider below — shared by both the Song Requests and Daily Check-In
+   pages, same layout system for both. */
+#songsPage,
+#snacksPage {
+    max-width: 1200px;
+    width: 100%;
+    align-self: center;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    align-items: start;
+    gap: 16px;
+}
+
+#settingsPage::-webkit-scrollbar,
+#songsPage::-webkit-scrollbar,
+#snacksPage::-webkit-scrollbar {
+    display: none;
+}
+
+#settingsPage h2,
+#songsPage h2 {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* Song Requests page — Settings and Queue are two full-width slide panels
+   rather than a responsive column grid, so the queue is always reachable
+   with one click regardless of window size (a side-by-side grid was
+   unreadable in windowed mode — one column ended up squeezed or hidden
+   below a long scroll). The two title buttons above swap which panel is
+   showing by translating .sr-slider sideways. */
+.sr-page-tabs {
+    display: flex;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+/* Looks exactly like the plain <h2> it replaced (same #songsPage h2 rule:
+   20px/700) — only the color state changes to show which panel is active. */
+.sr-page-tab {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(var(--accent-palest-rgb), 0.4);
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.sr-page-tab:hover:not(.active) {
+    color: rgba(var(--accent-palest-rgb), 0.7);
+}
+
+.sr-page-tab.active {
+    color: var(--accent-palest);
+    cursor: default;
+}
+
+.sr-slider-viewport {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sr-slider {
+    display: flex;
+    width: 200%;
+    height: 100%;
+    transition: transform 0.3s ease;
+}
+
+.sr-slider.show-queue {
+    transform: translateX(-50%);
+}
+
+.sr-settings-col,
+.sr-queue-col {
+    width: 50%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+    scrollbar-width: none;
+}
+
+.sr-settings-col::-webkit-scrollbar,
+.sr-queue-col::-webkit-scrollbar {
+    display: none;
+}
+
+/* Wide enough (maximized, or a large windowed size) to comfortably fit both
+   380px-minimum columns side by side again — the tab/slide mechanism above
+   only exists to solve the narrow case, so above this width it steps back
+   out of the way entirely and this behaves like the original static layout:
+   both panels visible, whole page scrolls as one unit. */
+@media (min-width: 1150px) {
+    .sr-page-tabs {
+        display: none;
+    }
+
+    #songsPage,
+    #snacksPage {
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
+    }
+
+    .sr-slider-viewport {
+        flex: none;
+        overflow: visible;
+    }
+
+    .sr-slider {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 20px;
+        align-items: start;
+        width: 100%;
+        height: auto;
+        transform: none !important;
+    }
+
+    .sr-settings-col,
+    .sr-queue-col {
+        width: auto;
+        overflow-y: visible;
+        padding-right: 0;
+    }
+}
+
+.sr-behavior-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px 20px;
+    align-items: start;
+}
+
+.sr-tier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px 16px;
+}
+
+.sr-tier-grid .settings-field {
+    min-width: 0;
+}
+
+.settings-section {
+    background: rgba(21, 19, 42, 0.45);
+    border: 1px solid rgba(var(--accent-rgb), 0.14);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.settings-section:focus-within {
+    border-color: rgba(var(--accent-rgb), 0.35);
+}
+
+/* Preferences grew a third field (Accent Color) and got noticeably taller
+   than its row-mates in the auto-fit grid, which sizes every row to its
+   tallest card — so let this one span the full row instead of competing for
+   height parity, and lay its fields out side by side now that it has the
+   width to spare. */
+.settings-section--wide {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.settings-section--wide > .settings-section-label,
+.settings-section--wide > .commands-section-divider {
+    flex: 1 1 100%;
+}
+
+.settings-section--wide > .settings-field {
+    flex: 1 1 260px;
+    min-width: 260px;
+}
+
+.settings-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    margin-bottom: -2px;
+}
+
+.settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.settings-field label {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+.accent-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.accent-swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.accent-swatch:hover {
+    transform: scale(1.12);
+}
+
+.accent-swatch.active {
+    border-color: white;
+}
+
+.accent-custom-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.accent-picker-trigger {
+    width: 44px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.accent-picker-trigger:hover {
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.accent-picker-trigger:active {
+    transform: scale(0.96);
+}
+
+.accent-picker-trigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Redeem background-color trigger — a full-width field-shaped button (swatch
+   + hex code) rather than the small standalone square used in Settings,
+   since here it sits alone in its own field row instead of next to preset
+   swatches and a reset button. */
+.color-picker-field-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 14, 24, 0.55);
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.color-picker-field-btn:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.color-picker-field-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.color-picker-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+.color-picker-hex {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    letter-spacing: 0.4px;
+    opacity: 0.85;
+}
+
+/* The pencil icon needs to read against whatever color the button's own
+   background gets set to (any hue, light or dark) — a drop-shadow keeps it
+   visible without having to compute per-color contrast in JS. */
+.accent-picker-trigger svg {
+    opacity: 0.9;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+}
+
+.accent-picker-trigger:hover svg {
+    opacity: 1;
+}
+
+/* Custom color picker — replaces <input type="color">'s native OS dialog,
+   which can't be restyled at all, with a themed popover of our own. Needs a
+   higher z-index than .modal-overlay (2000) since it's also opened from
+   inside the redeem form modal — otherwise the modal painted on top of it. */
+.color-popover {
+    display: none;
+    position: fixed;
+    width: 220px;
+    background: #15132a;
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    border-radius: 12px;
+    padding: 14px;
+    z-index: 2100;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.color-popover.open {
+    display: block;
+}
+
+.color-sl-panel {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    border-radius: 8px;
+    cursor: crosshair;
+    touch-action: none;
+    margin-bottom: 12px;
+}
+
+.color-sl-cursor {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.5);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.color-hue-slider {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    touch-action: none;
+    margin-bottom: 12px;
+    background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+}
+
+.color-hue-cursor {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.5);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.color-popover-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+}
+
+.color-hex-input {
+    flex: 1;
+    width: 0;
+    background: rgba(15, 14, 24, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 13px;
+    font-family: monospace;
+    outline: none;
+    text-transform: uppercase;
+    transition: border-color 0.15s;
+}
+
+.color-hex-input:focus {
+    border-color: var(--accent);
+}
+
+.settings-field input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 14, 24, 0.55);
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.settings-field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.settings-field input:hover:not(:focus) {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Custom dropdown for !time timezone — a native <select>'s open popup is
+   rendered by the OS on Windows/Chromium, so its scrollbar and option list
+   can't be styled at all. This is a plain styleable div instead. */
+.tz-dropdown {
+    position: relative;
+}
+
+.tz-dropdown-btn {
+    width: 100%;
+    text-align: left;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 14, 24, 0.55);
+    color: white;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.tz-dropdown-btn::after {
+    content: "▾";
+    float: right;
+    opacity: 0.5;
+}
+
+.tz-dropdown-btn:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.tz-dropdown.open .tz-dropdown-btn {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Positioned via inline style (position:fixed + top/left/width) set in JS,
+   because it's moved to a direct child of <body> at init time — see the
+   comment in initTimezoneDropdown() for why it can't just stay nested
+   inside .tz-dropdown. */
+.tz-dropdown-list {
+    display: none;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #15132a;
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 1000;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.tz-dropdown-list.open {
+    display: block;
+}
+
+.tz-option {
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.85);
+    transition: background 0.1s ease;
+}
+
+.tz-option:hover {
+    background: rgba(var(--accent-rgb), 0.2);
+}
+
+.tz-option.selected {
+    background: rgba(var(--accent-rgb), 0.3);
+    color: white;
+    font-weight: 600;
+}
+
+.tz-dropdown-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.tz-dropdown-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.tz-dropdown-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent), var(--accent-darker));
+    border-radius: 10px;
+    min-height: 30px;
+}
+
+.tz-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--accent-light), var(--accent-dark));
+}
+
+.field-hint {
+    font-size: 12px;
+    opacity: 0.38;
+    line-height: 1.4;
+}
+
+.settings-token-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.settings-token-wrap input {
+    flex: 1;
+}
+
+.toggle-vis {
+    background: rgba(var(--accent-rgb), 0.12);
+    border: 1px solid rgba(var(--accent-rgb), 0.28);
+    color: var(--accent-light);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.toggle-vis:hover {
+    background: rgba(var(--accent-rgb), 0.25);
+}
+
+#settingsPage > .primary {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 12px 26px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.18);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--accent-pale);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+#settingsPage > .primary:hover {
+    background: rgba(var(--accent-rgb), 0.28);
+}
+
+.power-btn {
+    padding: 16px 34px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    color: white;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.dashboard {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    align-self: center;
+    padding-top: 40px;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 900px;
+    min-height: 0;
+    scrollbar-width: none;
+}
+
+.dashboard::-webkit-scrollbar {
+    display: none;
+}
+
+.dashboard-container {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 0;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.greeting-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--accent-light);
+}
+
+.greeting-icon svg {
+    display: block;
+}
+
+#dashboardGreeting {
+    background: linear-gradient(90deg, var(--accent-palest), var(--accent-lighter));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Stopped — darkish translucent purple, not a solid fill */
+.power-btn {
+    background: rgba(var(--accent-rgb), 0.14);
+    border: 1px solid rgba(var(--accent-rgb), 0.32);
+    color: var(--accent-pale);
+    transition: all 0.2s ease;
+}
+
+.power-btn:hover {
+    background: rgba(var(--accent-rgb), 0.22);
+}
+
+/* Running — darkish translucent red, not a solid fill */
+.power-btn.running {
+    background: rgba(239, 68, 68, 0.16);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fecaca;
+}
+
+.power-btn.running:hover {
+    background: rgba(239, 68, 68, 0.24);
+    box-shadow: 0 10px 24px rgba(239, 68, 68, 0.18);
+}
+
+.power-btn:active {
+    transform: scale(0.98);
+}
+
+.power-btn:disabled {
+    cursor: wait;
+}
+
+.status-card {
+    background: rgba(21, 19, 42, 0.45);
+    border: 1px solid rgba(var(--accent-rgb), 0.14);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+#dashboardNowPlaying {
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.logs-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: scroll;
+    overflow-x: hidden;
+
+    background: rgba(21, 19, 42, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    border-radius: 16px;
+    padding: 16px;
+    padding-right: 12px;
+
+    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    box-shadow:
+        inset 0 0 40px rgba(var(--accent-rgb), 0.06),
+        0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.log-line {
+    padding: 3px 8px;
+    border-left: 2px solid transparent;
+    border-radius: 4px;
+    font-family: monospace;
+    opacity: 0.85;
+    transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.log-line:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.log-line[data-type="error"] {
+    border-left-color: rgba(239, 68, 68, 0.6);
+    color: #fca5a5;
+}
+
+.log-line[data-type="bot"] {
+    border-left-color: rgba(var(--accent-rgb), 0.6);
+    color: var(--accent-lighter);
+}
+
+.log-line[data-type="info"] {
+    border-left-color: rgba(255, 255, 255, 0.12);
+}
+
+#logsPage {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 16px;
+}
+
+#logsPage h2 {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.logs-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(21, 19, 42, 0.4);
+    border: 1px solid rgba(var(--accent-rgb), 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+}
+
+.filters {
+    display: flex;
+    gap: 6px;
+}
+
+.log-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.auto-scroll {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.auto-scroll input[type="checkbox"] {
+    accent-color: var(--accent);
+}
+
+.filter-btn {
+    background: rgba(var(--accent-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-rgb), 0.24);
+    color: var(--accent-glow);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filter-btn:hover {
+    background: rgba(var(--accent-rgb), 0.2);
+}
+
+.filter-btn.active {
+    background: rgba(var(--accent-rgb), 0.35);
+    border-color: rgba(var(--accent-rgb), 0.6);
+    color: white;
+}
+
+.logs-clear-btn {
+    background: rgba(var(--accent-rgb), 0.18);
+    border: 1px solid rgba(var(--accent-rgb), 0.45);
+    color: var(--accent-glow);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.logs-clear-btn:hover {
+    background: rgba(var(--accent-rgb), 0.32);
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.5);
+}
+
+.logs-clear-btn:active {
+    transform: scale(0.95);
+}
+
+.logs-copy-btn {
+    position: relative;
+    min-width: 76px;
+    background: rgba(var(--accent-rgb), 0.18);
+    border: 1px solid rgba(var(--accent-rgb), 0.45);
+    color: var(--accent-glow);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.logs-copy-btn:hover {
+    background: rgba(var(--accent-rgb), 0.32);
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.5);
+}
+
+.logs-copy-btn.copied {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: #22c55e;
+    color: #86efac;
+}
+
+.logs-copy-btn::after {
+    content: "✓";
+    position: absolute;
+    right: 10px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.logs-copy-btn.copied::after {
+    opacity: 1;
+}
+
+.logs-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent), var(--accent-darker));
+    border-radius: 10px;
+    min-height: 40px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--accent-light), var(--accent-dark));
+}
+
+/* LISTS PAGE FIX */
+
+#listsPage {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 16px;
+}
+
+.lists-container {
+    display: flex;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+}
+
+.list-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(21, 19, 42, 0.45);
+    border: 1px solid rgba(var(--accent-rgb), 0.14);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 14px;
+    padding: 16px;
+    transition: border-color 0.2s ease;
+}
+
+.list-col:focus-within {
+    border-color: rgba(var(--accent-rgb), 0.35);
+}
+
+.list-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.list-col-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.list-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-light);
+    background: rgba(var(--accent-rgb), 0.14);
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    padding: 2px 10px;
+    border-radius: 999px;
+}
+
+.list-col textarea {
+    flex: 1;
+    min-height: 200px;
+}
+
+#listsPage h2 {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+#listsPage > .primary {
+    align-self: flex-start;
+    padding: 12px 26px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.18);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--accent-pale);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+#listsPage > .primary:hover {
+    background: rgba(var(--accent-rgb), 0.28);
+}
+
+/* CLIPS PAGE */
+
+#clipsPage {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.clips-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.clips-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.clips-meta {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(var(--accent-palest-rgb), 0.55);
+}
+
+.live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #86efac;
+    font-weight: 600;
+}
+
+.live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+    animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.clips-grid {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
+    gap: 16px;
+    align-content: start;
+    padding-right: 6px;
+}
+
+.clips-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.clips-grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.clips-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent), var(--accent-darker));
+    border-radius: 10px;
+    min-height: 40px;
+}
+
+.clips-grid::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--accent-light), var(--accent-dark));
+}
+
+.clip-card {
+    background: rgba(21, 19, 42, 0.45);
+    border: 1px solid rgba(var(--accent-rgb), 0.14);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.clip-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.32);
+}
+
+.clip-thumb-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    overflow: hidden;
+    background: #0d0b1f;
+    cursor: pointer;
+}
+
+.clip-thumb-wrap img,
+.clip-thumb-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: cover;
+}
+
+.clip-play-btn {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 2px;
+    background: rgba(var(--accent-rgb), 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s ease;
+}
+
+.clip-thumb-wrap:hover .clip-play-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.clip-play-btn:hover {
+    background: rgba(var(--accent-rgb), 0.6);
+}
+
+.clip-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 8px;
+    padding: 12px 10px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.88));
+    transform: translateY(100%);
+    transition: transform 0.2s ease;
+}
+
+.clip-thumb-wrap:hover .clip-overlay {
+    transform: translateY(0);
+}
+
+.clip-thumb-wrap.playing .clip-play-btn,
+.clip-thumb-wrap.playing .clip-overlay {
+    display: none;
+}
+
+/* Mirrors .clip-overlay's buttons but sits below the thumbnail instead of
+   floating on top of it — hover doesn't reach here once the embed's own
+   controls are what you're hovering, so this is what keeps Open/Download
+   reachable once a clip is playing. */
+.clip-controls {
+    display: none;
+    gap: 8px;
+    padding: 10px 12px 0;
+}
+
+.clip-thumb-wrap.playing ~ .clip-controls {
+    display: flex;
+}
+
+.clip-btn {
+    flex: 1;
+    padding: 7px 0;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: all 0.15s ease;
+}
+
+.clip-open-btn {
+    background: rgba(var(--accent-rgb), 0.32);
+    border: 1px solid rgba(var(--accent-rgb), 0.5);
+    color: white;
+}
+
+.clip-open-btn:hover {
+    background: rgba(var(--accent-rgb), 0.5);
+}
+
+.clip-dl-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.clip-dl-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.clip-info {
+    padding: 10px 12px 12px;
+}
+
+.clip-title {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.clip-creator {
+    font-size: 12px;
+    opacity: 0.5;
+}
+
+.clips-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    opacity: 0.4;
+    padding: 80px 0;
+    font-size: 14px;
+}
+
+/* SNACKS PAGE */
+
+.snacks-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.snacks-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.snacks-search {
+    flex: 1;
+    min-width: 120px;
+    background: rgba(15, 14, 24, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.snacks-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* No longer its own scroll container — .sr-queue-col (see the Song
+   Requests/Daily Check-In shared layout rules) wraps it and handles
+   scrolling now. Nesting two independent overflow:auto containers here
+   would fight each other, same class of bug already fixed once for the
+   Song Requests queue. */
+.snacks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.snacks-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent-darker)); border-radius: 10px; min-height: 40px; }
+.snacks-list::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--accent-light), var(--accent-dark)); }
+
+.snack-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(21, 19, 42, 0.45);
+    border: 1px solid rgba(var(--accent-rgb), 0.14);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 10px 14px;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.2s ease, transform 0.2s ease;
+    /* Scroll-reveal: rows start hidden/scaled down and get `.in-view` toggled
+       by an IntersectionObserver in main.js as they cross into #snacksList's
+       viewport — same fade+scale-in effect on the way in and out, every time. */
+    opacity: 0;
+    transform: scale(0.7);
+}
+
+.snack-row.in-view {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.snack-row:hover {
+    background: rgba(28, 26, 53, 0.6);
+    border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.snack-rank {
+    font-size: 12px;
+    opacity: 0.35;
+    width: 30px;
+    flex-shrink: 0;
+}
+
+.snack-row.rank-1 .snack-rank {
+    color: #fbbf24;
+    opacity: 0.95;
+    font-weight: 700;
+}
+
+.snack-row.rank-2 .snack-rank {
+    color: #d1d5db;
+    opacity: 0.9;
+    font-weight: 700;
+}
+
+.snack-row.rank-3 .snack-rank {
+    color: #d97706;
+    opacity: 0.9;
+    font-weight: 700;
+}
+
+.snack-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.snack-count {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-light);
+    min-width: 36px;
+    text-align: right;
+}
+
+.snack-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+    align-items: center;
+}
+
+.snack-input {
+    width: 72px;
+    background: rgba(15, 14, 24, 0.6);
+    border: 1px solid var(--accent);
+    color: white;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+    outline: none;
+    text-align: center;
+}
+
+.snack-del-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color 0.15s;
+    line-height: 1;
+}
+
+.snack-del-btn:hover {
+    color: #ef4444;
+}
+
+.snack-cancel-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    transition: color 0.15s;
+}
+
+.snack-cancel-btn:hover {
+    color: white;
+}
+
+.snack-add-row {
+    border: 1px dashed rgba(var(--accent-rgb), 0.35);
+}
+
+.snack-add-name {
+    flex: 1;
+    background: rgba(15, 14, 24, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.snack-add-name:focus {
+    border-color: var(--accent);
+}
+
+.snacks-empty {
+    text-align: center;
+    opacity: 0.4;
+    padding: 80px 0;
+    font-size: 14px;
+}
+
+/* COMMANDS PAGE */
+
+#commandsPage {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.commands-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.commands-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.commands-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+}
+
+.commands-scroll::-webkit-scrollbar { width: 8px; }
+.commands-scroll::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+.commands-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent-darker)); border-radius: 10px; min-height: 40px; }
+.commands-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--accent-light), var(--accent-dark)); }
+
+.commands-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.commands-section-divider {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin: 24px 0 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(var(--accent-rgb), 0.14);
+}
+
+.commands-section-divider span:first-child {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.55;
+}
+
+.commands-empty {
+    text-align: center;
+    opacity: 0.4;
+    padding: 32px 0;
+    font-size: 14px;
+}
+
+/* Shared card shell for both custom and built-in command rows */
+.command-card {
+    background: rgba(21, 19, 42, 0.45);
+    border: 1px solid rgba(var(--accent-rgb), 0.14);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.command-card:hover {
+    background: rgba(28, 26, 53, 0.6);
+    border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.command-card.builtin {
+    /* Read-mostly — dimmer than a custom command card so the two are easy
+       to tell apart at a glance. */
+    opacity: 0.82;
+}
+
+.command-card.builtin:hover {
+    opacity: 1;
+}
+
+.command-card-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.command-trigger {
+    font-family: monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-lighter);
+    flex-shrink: 0;
+}
+
+.command-description {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    opacity: 0.55;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cmd-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.14);
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    color: var(--accent-light);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.cmd-badge.muted {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.cmd-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Enable/disable switch */
+.cmd-toggle {
+    position: relative;
+    width: 34px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.cmd-toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+}
+
+.cmd-toggle-track {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    transition: background 0.15s ease;
+    pointer-events: none;
+}
+
+.cmd-toggle-track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.15s ease;
+}
+
+.cmd-toggle input:checked ~ .cmd-toggle-track {
+    background: var(--accent);
+}
+
+.cmd-toggle input:checked ~ .cmd-toggle-track::after {
+    transform: translateX(14px);
+}
+
+.command-edit-btn,
+.command-del-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.command-edit-btn:hover {
+    color: white;
+    background: rgba(var(--accent-rgb), 0.2);
+}
+
+.command-del-btn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+}
+
+/* Built-in command message editor (expands under the card row) */
+.builtin-messages {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.builtin-messages.open {
+    display: flex;
+}
+
+.builtin-message-field label {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.7;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.builtin-message-field textarea {
+    width: 100%;
+    min-height: 44px;
+    background: rgba(15, 14, 24, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: monospace;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.builtin-message-field textarea:focus {
+    border-color: var(--accent);
+}
+
+.builtin-message-field .field-hint {
+    margin-top: 3px;
+}
+
+.builtin-messages-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.builtin-expand-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.builtin-expand-btn:hover {
+    border-color: rgba(var(--accent-rgb), 0.4);
+    color: white;
+}
+
+/* Inline validation error under the trigger field */
+.field-error {
+    color: #f87171;
+    display: none;
+}
+
+.field-error.visible {
+    display: block;
+}
+
+.field-error a {
+    color: #fca5a5;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Command create/edit modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 4, 10, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal {
+    width: 100%;
+    max-width: 460px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: #15132a;
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.modal-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.modal-close:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.modal-body {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar { width: 8px; }
+.modal-body::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+.modal-body::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent-darker)); border-radius: 10px; min-height: 30px; }
+.modal-body::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--accent-light), var(--accent-dark)); }
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.cmd-type-toggle {
+    display: flex;
+    gap: 6px;
+}
+
+.cmd-type-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 8px 0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cmd-type-btn.active {
+    background: rgba(var(--accent-rgb), 0.22);
+    border-color: rgba(var(--accent-rgb), 0.5);
+    color: white;
+}
+
+/* Stacked, not side-by-side: the toggle's three buttons plus a fixed-width
+   seconds box competing for space in one row is what caused the seconds
+   field to force an overflow/scrollbar in a 460px-wide modal (that field
+   was also losing a specificity fight against ".modal .settings-field
+   input { width: 100% }", so it wasn't even the 90px it claimed to be —
+   see the #cmdCooldownSeconds/#redeemCooldownSeconds rule below, which
+   uses an ID to reliably win that fight instead). */
+.cmd-cooldown-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#cmdCooldownSeconds,
+#redeemCooldownSeconds {
+    width: 110px;
+}
+
+.cmd-replies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cmd-reply-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.cmd-reply-row input {
+    flex: 1;
+}
+
+.cmd-reply-remove {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+
+.cmd-reply-remove:hover {
+    color: #ef4444;
+}
+
+#commandsPage select,
+#songsPage select,
+#snacksPage select {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 14, 24, 0.55);
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+}
+
+#commandsPage select:focus,
+#songsPage select:focus,
+#snacksPage select:focus {
+    border-color: var(--accent);
+}
+
+.modal .settings-field input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 14, 24, 0.55);
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.modal .settings-field input:focus {
+    border-color: var(--accent);
+}
+
+/* Same pill family as .logs-clear-btn/.toggle-vis (same height, border-radius,
+   background treatment) rather than a fixed-size circle, so it doesn't read
+   as a mismatched third shape next to the count badge and action button. */
+.help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.14);
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    color: var(--accent-light);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+}
+
+.help-btn:hover {
+    background: rgba(var(--accent-rgb), 0.28);
+}
+
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.placeholder-help-modal {
+    max-width: 420px;
+}
+
+.placeholder-group {
+    margin-bottom: 14px;
+}
+
+.placeholder-group h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.5;
+    margin-bottom: 6px;
+}
+
+.placeholder-group-divider {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.5;
+    margin: 4px 0 8px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.placeholder-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+.placeholder-row code {
+    font-family: monospace;
+    color: var(--accent-lighter);
+    flex-shrink: 0;
+    min-width: 100px;
+}
+
+.placeholder-row span {
+    opacity: 0.65;
+}
+
+/* REDEEMS PAGE */
+
+.redeem-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+.redeem-checkbox-label input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.cmd-permission-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 14, 24, 0.55);
+}
+
+.modal-delete-btn {
+    margin-right: auto;
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.15s;
+}
+
+.modal-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.24);
+}
+
+.redeem-cost-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.redeem-warning-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    color: #fca5a5;
+    font-size: 12px;
+}
+
+.command-card.redeem-disabled {
+    opacity: 0.55;
+}

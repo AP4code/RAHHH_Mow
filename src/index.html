@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>RAHHH</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="titlebar.css" />
+  <link rel="stylesheet" href="sideRays.css" />
+  <link rel="stylesheet" href="borderGlow.css" />
+</head>
+
+<body>
+  <div class="titlebar">
+    <div class="titlebar-drag" data-tauri-drag-region>
+      <span class="titlebar-title" data-tauri-drag-region>RAHHH</span>
+    </div>
+    <div class="titlebar-controls">
+      <button id="tbMinimize" class="tb-btn" aria-label="Minimize">&#8211;</button>
+      <button id="tbMaximize" class="tb-btn" aria-label="Maximize">&#9633;</button>
+      <button id="tbClose" class="tb-btn tb-close" aria-label="Close">&#10005;</button>
+    </div>
+  </div>
+
+  <div class="resize-handle rh-n" data-dir="North"></div>
+  <div class="resize-handle rh-s" data-dir="South"></div>
+  <div class="resize-handle rh-e" data-dir="East"></div>
+  <div class="resize-handle rh-w" data-dir="West"></div>
+  <div class="resize-handle rh-ne" data-dir="NorthEast"></div>
+  <div class="resize-handle rh-nw" data-dir="NorthWest"></div>
+  <div class="resize-handle rh-se" data-dir="SouthEast"></div>
+  <div class="resize-handle rh-sw" data-dir="SouthWest"></div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">RAHHH</div>
+      <div id="status" class="status stopped">
+        ● Bot Stopped
+      </div>
+
+      <nav>
+        <button class="nav-btn active" id="dashNav">Dashboard</button>
+        <button class="nav-btn" id="listsNav">Lists</button>
+        <button class="nav-btn" id="clipsNav">Clips</button>
+        <button class="nav-btn" id="snacksNav">Daily Check In</button>
+        <button class="nav-btn" id="commandsNav">Commands</button>
+        <button class="nav-btn" id="redeemsNav">Redeems</button>
+        <button class="nav-btn" id="songsNav">Song Requests</button>
+        <button class="nav-btn" id="logsNav">Logs</button>
+        <button class="nav-btn" id="settingsNav">Settings</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div id="sideRaysBg"></div>
+
+      <!-- DASHBOARD PAGE -->
+      <div class="dashboard">
+        <div class="dashboard-container">
+
+          <div class="dashboard-header">
+            <h2>
+              <span id="greetingIcon" class="greeting-icon" aria-hidden="true"></span>
+              <span id="dashboardGreeting">Bot Control</span>
+            </h2>
+          </div>
+
+          <div id="toggleBotGlow">
+            <button id="toggleBot" class="power-btn">
+              ⏻ Start Bot
+            </button>
+          </div>
+
+          <div class="status-card">
+            <div class="status-row">
+              <span>Channel</span>
+              <span id="channelName">—</span>
+            </div>
+            <div class="status-row">
+              <span>Allowlist</span>
+              <span id="allowCount">—</span>
+            </div>
+            <div class="status-row">
+              <span>VIPs</span>
+              <span id="vipCount">—</span>
+            </div>
+            <div class="status-row">
+              <span>Last SO</span>
+              <span id="lastSO">None</span>
+            </div>
+            <div class="status-row">
+              <span>Stream</span>
+              <span id="streamState">Unknown</span>
+            </div>
+            <div class="status-row">
+              <span>Now Playing</span>
+              <span id="dashboardNowPlaying">—</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- LISTS PAGE -->
+      <div id="listsPage" style="display:none;">
+        <h2>Manage Lists</h2>
+
+        <div class="lists-container">
+          <div class="list-col">
+            <div class="list-col-header">
+              <h3>Allowlist</h3>
+              <span class="list-count" id="allowlistCount">0</span>
+            </div>
+            <span class="field-hint">Auto-shoutout eligible chatters — one username per line</span>
+            <textarea id="allowlistBox" spellcheck="false"></textarea>
+          </div>
+
+          <div class="list-col">
+            <div class="list-col-header">
+              <h3>VIP List</h3>
+              <span class="list-count" id="viplistCount">0</span>
+            </div>
+            <span class="field-hint">Always shouted out on first message — one username per line</span>
+            <textarea id="viplistBox" spellcheck="false"></textarea>
+          </div>
+        </div>
+
+        <button id="saveLists" class="primary">Save Lists</button>
+      </div>
+
+      <!-- LOGS PAGE -->
+      <div id="logsPage" style="display:none;">
+
+          <h2>Logs</h2>
+
+          <div class="logs-controls">
+            <label class="auto-scroll">
+              <input type="checkbox" id="autoScroll" checked>
+              Auto scroll
+            </label>
+
+            <div class="filters">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="info">Info</button>
+              <button class="filter-btn" data-filter="error">Error</button>
+              <button class="filter-btn" data-filter="bot">Bot</button>
+            </div>
+
+            <div class="log-actions">
+              <button id="clearLogs" class="logs-clear-btn">Clear</button>
+              <button id="copyLogs" class="logs-copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div id="logs" class="logs-container"></div>
+
+        </div>
+
+        <!-- SETTINGS PAGE -->
+        <div id="settingsPage" style="display:none;">
+          <h2>Bot Settings</h2>
+
+          <div class="settings-grid">
+          <div class="settings-section settings-section--wide">
+            <p class="settings-section-label">Preferences</p>
+            <div class="settings-field">
+              <label for="downloadLocation">Clip Download Location</label>
+              <div class="settings-token-wrap">
+                <input id="downloadLocation" placeholder="C:\Users\you\Videos\Clips">
+                <button type="button" class="toggle-vis" id="browseDownloadLocation">Browse…</button>
+              </div>
+              <span class="field-hint">Where downloaded clips are saved — leave blank for your Downloads folder</span>
+            </div>
+            <div class="settings-field">
+              <label for="sfxOverlayUrl">SFX Browser Source URL</label>
+              <div class="settings-token-wrap">
+                <input id="sfxOverlayUrl" readonly>
+                <button type="button" class="toggle-vis" id="copySfxOverlayUrl">Copy</button>
+              </div>
+              <span class="field-hint">Add this as a Browser Source in OBS — one source plays every sound effect</span>
+            </div>
+            <div class="settings-field">
+              <label for="timeTimezoneBtn">!time Timezone</label>
+              <div class="tz-dropdown" id="timeTimezoneDropdown">
+                <input type="hidden" id="timeTimezone">
+                <button type="button" class="tz-dropdown-btn" id="timeTimezoneBtn"></button>
+                <div class="tz-dropdown-list" id="timeTimezoneList"></div>
+              </div>
+              <span class="field-hint">Timezone !time reports the current time in</span>
+            </div>
+            <div class="settings-field">
+              <label>Accent Color</label>
+              <div class="accent-swatches" id="accentSwatches"></div>
+              <div class="accent-custom-row">
+                <button type="button" class="accent-picker-trigger" id="accentPickerTrigger" aria-label="Pick a custom accent color" title="Pick a custom accent color…">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                  </svg>
+                </button>
+                <button type="button" class="toggle-vis" id="resetAccentColor">Reset</button>
+              </div>
+              <span class="field-hint">Recolors the whole UI instantly — no save or restart needed</span>
+
+              <!-- Positioned via inline style (position:fixed + top/left) set in JS,
+                   moved to a direct child of <body> at init — same reasoning as
+                   .tz-dropdown-list (see initTimezoneDropdown in main.js). -->
+              <div class="color-popover" id="accentColorPopover">
+                <div class="color-sl-panel" id="colorSlPanel">
+                  <div class="color-sl-cursor" id="colorSlCursor"></div>
+                </div>
+                <div class="color-hue-slider" id="colorHueSlider">
+                  <div class="color-hue-cursor" id="colorHueCursor"></div>
+                </div>
+                <div class="color-popover-footer">
+                  <span class="color-preview" id="colorPreview"></span>
+                  <input type="text" id="colorHexInput" class="color-hex-input" maxlength="7" spellcheck="false" autocomplete="off">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section settings-section--wide">
+            <p class="settings-section-label">Channel</p>
+            <div class="settings-field">
+              <label for="targetChannel">Target Channel</label>
+              <input id="targetChannel" readonly placeholder="Connect the Streamer account below">
+            </div>
+            <div class="settings-field">
+              <label for="modLogin">Moderator Login</label>
+              <input id="modLogin" readonly placeholder="Connect the Mod account below">
+            </div>
+
+            <div class="commands-section-divider">
+              <span>Twitch App</span>
+              <span class="field-hint">Create an app at the Twitch Developer Console, then paste its Client ID/Secret here — the Connect buttons below use these to authorize each account.</span>
+            </div>
+            <div class="settings-field">
+              <span class="field-hint">ADD THE REDIRECT URI SHOWN BELOW TO YOUR APP'S "OAUTH REDIRECT URLS" ON TWITCH'S DEVELOPER CONSOLE, OR THE CONNECT BUTTONS WON'T WORK.</span>
+              <button type="button" id="openTwitchDevConsole" class="logs-clear-btn">Open Twitch Developer Console</button>
+            </div>
+            <div class="settings-field">
+              <label for="twitchClientId">Client ID</label>
+              <input id="twitchClientId" placeholder="Twitch app Client ID" autocomplete="off">
+            </div>
+            <div class="settings-field">
+              <label for="twitchClientSecret">Client Secret</label>
+              <div class="settings-token-wrap">
+                <input id="twitchClientSecret" type="password" placeholder="Twitch app Client Secret">
+                <button type="button" class="toggle-vis" data-target="twitchClientSecret">Show</button>
+              </div>
+            </div>
+            <div class="settings-field">
+              <label for="twitchRedirectUri">Redirect URI</label>
+              <div class="settings-token-wrap">
+                <input id="twitchRedirectUri" readonly value="http://localhost:17846/callback">
+                <button type="button" class="toggle-vis" id="copyTwitchRedirectUri">Copy</button>
+              </div>
+              <span class="field-hint">Paste this into your Twitch app's OAuth Redirect URLs before connecting</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <p class="settings-section-label">Streamer Account (Shoutouts)</p>
+            <div class="settings-field">
+              <button type="button" id="connectStreamer" class="logs-clear-btn">Connect with Twitch</button>
+              <span class="field-hint" id="streamerConnectStatus"></span>
+            </div>
+            <div class="settings-field">
+              <label for="streamerUserToken">Streamer Access Token</label>
+              <div class="settings-token-wrap">
+                <input id="streamerUserToken" type="password" placeholder="Access token">
+                <button class="toggle-vis" data-target="streamerUserToken">Show</button>
+              </div>
+            </div>
+            <div class="settings-field">
+              <label for="streamerRefreshToken">Streamer Refresh Token</label>
+              <div class="settings-token-wrap">
+                <input id="streamerRefreshToken" type="password" placeholder="Refresh token">
+                <button class="toggle-vis" data-target="streamerRefreshToken">Show</button>
+              </div>
+              <span class="field-hint">Used to auto-renew the access token</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <p class="settings-section-label">Bot Account (Chat)</p>
+            <div class="settings-field">
+              <button type="button" id="connectBot" class="logs-clear-btn">Connect with Twitch</button>
+              <span class="field-hint" id="botConnectStatus"></span>
+            </div>
+            <div class="settings-field">
+              <label for="botUserToken">Bot Access Token</label>
+              <div class="settings-token-wrap">
+                <input id="botUserToken" type="password" placeholder="Access token">
+                <button class="toggle-vis" data-target="botUserToken">Show</button>
+              </div>
+            </div>
+            <div class="settings-field">
+              <label for="botRefreshToken">Bot Refresh Token</label>
+              <div class="settings-token-wrap">
+                <input id="botRefreshToken" type="password" placeholder="Refresh token">
+                <button class="toggle-vis" data-target="botRefreshToken">Show</button>
+              </div>
+              <span class="field-hint">Used to auto-renew the access token</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <p class="settings-section-label">Mod Account (Clips)</p>
+            <div class="settings-field">
+              <button type="button" id="connectMod" class="logs-clear-btn">Connect with Twitch</button>
+              <span class="field-hint" id="modConnectStatus"></span>
+            </div>
+            <div class="settings-field">
+              <label for="userToken">Mod Access Token</label>
+              <div class="settings-token-wrap">
+                <input id="userToken" type="password" placeholder="Access token">
+                <button class="toggle-vis" data-target="userToken">Show</button>
+              </div>
+            </div>
+            <div class="settings-field">
+              <label for="refreshToken">Mod Refresh Token</label>
+              <div class="settings-token-wrap">
+                <input id="refreshToken" type="password" placeholder="Refresh token">
+                <button class="toggle-vis" data-target="refreshToken">Show</button>
+              </div>
+              <span class="field-hint">Used to auto-renew the access token</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <p class="settings-section-label">Integrations</p>
+            <div class="settings-field">
+              <label for="discordWebhook">Discord Webhook URL</label>
+              <div class="settings-token-wrap">
+                <input id="discordWebhook" type="password" placeholder="https://discord.com/api/webhooks/...">
+                <button class="toggle-vis" data-target="discordWebhook">Show</button>
+              </div>
+              <span class="field-hint">Where the !note command posts chat notes</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <p class="settings-section-label">Updates</p>
+            <div class="settings-field">
+              <span class="field-hint">Version <span id="appVersion">—</span></span>
+            </div>
+            <div class="settings-field">
+              <button type="button" id="checkForUpdates" class="logs-clear-btn">Check for Updates</button>
+              <span class="field-hint" id="updateStatus"></span>
+            </div>
+          </div>
+          </div>
+
+          <button id="saveSettings" class="primary">Save &amp; Restart Bot</button>
+        </div>
+
+      <!-- CLIPS PAGE -->
+      <div id="clipsPage" style="display:none;">
+        <div class="clips-header">
+          <h2>Clips</h2>
+          <span class="clips-meta" id="clipsMeta"></span>
+          <button id="refreshClips" class="logs-clear-btn">Refresh</button>
+        </div>
+        <div id="clipsGrid" class="clips-grid"></div>
+      </div>
+
+      <!-- DAILY CHECK-IN PAGE (still id="snacksPage" internally — only the
+           user-facing label changed, renaming every internal reference
+           wasn't worth the churn/risk) -->
+      <div id="snacksPage" style="display:none;">
+        <div class="sr-page-tabs">
+          <button type="button" class="sr-page-tab active" id="ciTabSettings">Daily Check In</button>
+          <button type="button" class="sr-page-tab" id="ciTabQueue">Check-In Points</button>
+        </div>
+
+        <div class="sr-slider-viewport">
+          <div class="sr-slider" id="ciSlider">
+            <div class="sr-settings-col">
+              <div class="settings-section">
+                <p class="settings-section-label">Daily Check In</p>
+                <div class="settings-field">
+                  <label class="redeem-checkbox-label"><input type="checkbox" id="ciEnabled"> Enable</label>
+                </div>
+                <div class="settings-field">
+                  <label for="ciRedeemSelect">Which redeem triggers a check-in</label>
+                  <select id="ciRedeemSelect"><option value="">Loading rewards…</option></select>
+                  <span class="field-hint">Only one existing Twitch reward can trigger a check-in — create it on Twitch first, then pick it here.</span>
+                </div>
+                <div class="settings-field">
+                  <label for="ciPointsPerCheckIn">Points per check-in</label>
+                  <input id="ciPointsPerCheckIn" type="number" min="1" value="1">
+                </div>
+                <div class="settings-field">
+                  <label for="ciMessage">Chat message</label>
+                  <input id="ciMessage" placeholder="{user} just checked in! They now have {value} check-in point(s).">
+                  <span class="field-hint">Placeholders: {user}, {value} (their new point total). Sent from your own (streamer) account, not the bot.</span>
+                </div>
+                <button type="button" id="saveCheckInSettings" class="primary">Save Settings</button>
+              </div>
+            </div>
+
+            <div class="sr-queue-col">
+              <div class="snacks-header">
+                <h2>Check-In Points</h2>
+                <span class="list-count" id="snacksCount">0</span>
+                <input id="snacksSearch" class="snacks-search" placeholder="Search user...">
+                <button id="addSnackUser" class="logs-clear-btn">+ Add</button>
+                <button id="refreshSnacks" class="logs-clear-btn">Refresh</button>
+              </div>
+              <div id="snacksList" class="snacks-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMMANDS PAGE -->
+      <div id="commandsPage" style="display:none;">
+        <div class="commands-header">
+          <h2>Commands</h2>
+          <span class="list-count" id="customCommandsCount">0</span>
+          <button type="button" class="help-btn" id="placeholderHelpBtn" title="Available placeholders">?</button>
+          <button id="addCustomCommand" class="logs-clear-btn">+ New Command</button>
+        </div>
+
+        <div class="commands-scroll">
+          <div id="customCommandsList" class="commands-list"></div>
+
+          <div class="commands-section-divider">
+            <span>Built-in Commands</span>
+            <span class="field-hint">Shown so new triggers don't collide — some allow editing their reply text, but never their trigger or logic.</span>
+          </div>
+          <div id="builtinCommandsList" class="commands-list"></div>
+        </div>
+      </div>
+
+      <!-- REDEEMS PAGE -->
+      <div id="redeemsPage" style="display:none;">
+        <div class="commands-header">
+          <h2>Redeems</h2>
+          <span class="list-count" id="redeemsCount">0</span>
+          <button id="refreshRedeems" class="logs-clear-btn">Refresh</button>
+          <button id="addRedeem" class="logs-clear-btn">+ New Redeem</button>
+        </div>
+
+        <div class="commands-scroll">
+          <div id="redeemsList" class="commands-list"></div>
+        </div>
+      </div>
+
+      <!-- SONG REQUESTS PAGE -->
+      <div id="songsPage" style="display:none;">
+        <div class="sr-page-tabs">
+          <button type="button" class="sr-page-tab active" id="srTabSettings">Song Requests</button>
+          <button type="button" class="sr-page-tab" id="srTabQueue">Song Queue</button>
+        </div>
+
+        <div class="sr-slider-viewport">
+          <div class="sr-slider" id="srSlider">
+          <div class="sr-settings-col">
+            <div class="settings-section">
+              <p class="settings-section-label">Spotify Connection</p>
+              <div class="settings-field">
+                <div id="spotifyStatus" class="status stopped" style="width:fit-content;">● Not Connected</div>
+              </div>
+              <div class="settings-field">
+                <span class="field-hint">Create an app at the Spotify Developer Dashboard, add the Redirect URI below to it, then paste its Client ID/Secret here.</span>
+                <button type="button" id="openSpotifyDevDashboard" class="logs-clear-btn">Open Spotify Developer Dashboard</button>
+              </div>
+              <div class="settings-field">
+                <label for="spotifyClientId">Client ID</label>
+                <input id="spotifyClientId" placeholder="Spotify app Client ID" autocomplete="off">
+              </div>
+              <div class="settings-field">
+                <label for="spotifyClientSecret">Client Secret</label>
+                <div class="settings-token-wrap">
+                  <input id="spotifyClientSecret" type="password" placeholder="Spotify app Client Secret">
+                  <button type="button" class="toggle-vis" data-target="spotifyClientSecret">Show</button>
+                </div>
+              </div>
+              <div class="settings-field">
+                <label for="spotifyRedirectUri">Redirect URI</label>
+                <div class="settings-token-wrap">
+                  <input id="spotifyRedirectUri" readonly value="http://127.0.0.1:17845/callback">
+                  <button type="button" class="toggle-vis" id="copySpotifyRedirectUri">Copy</button>
+                </div>
+                <span class="field-hint">Paste this into your Spotify Developer app's Redirect URIs before connecting</span>
+              </div>
+              <div class="settings-field">
+                <button type="button" id="connectSpotify" class="primary">Connect Spotify</button>
+                <button type="button" id="disconnectSpotify" class="toggle-vis" style="display:none;">Disconnect</button>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <p class="settings-section-label">Request Behavior</p>
+              <div class="sr-behavior-grid">
+                <div class="settings-field">
+                  <label class="redeem-checkbox-label"><input type="checkbox" id="srChatEnabled"> Enable chat command</label>
+                  <input id="srChatCommand" placeholder="!sr" autocomplete="off">
+                </div>
+                <div class="settings-field">
+                  <label class="redeem-checkbox-label"><input type="checkbox" id="srChannelPointsEnabled"> Enable channel points redeem</label>
+                  <select id="srRedeemSelect"><option value="">Loading rewards…</option></select>
+                </div>
+                <div class="settings-field">
+                  <label for="srCooldown">Cooldown (seconds)</label>
+                  <input id="srCooldown" type="number" min="0" value="0">
+                </div>
+                <div class="settings-field">
+                  <label for="srMaxDuration">Max song length (minutes)</label>
+                  <input id="srMaxDuration" type="number" min="0" value="0">
+                  <span class="field-hint">0 = no limit</span>
+                </div>
+                <div class="settings-field">
+                  <label for="srPromoteBeforeEnd">Push into Spotify N seconds before track ends</label>
+                  <input id="srPromoteBeforeEnd" type="number" min="1" value="5">
+                </div>
+                <div class="settings-field">
+                  <label for="srPlaylistId">Also add to Spotify playlist (optional)</label>
+                  <input id="srPlaylistId" placeholder="Spotify playlist ID">
+                </div>
+              </div>
+              <span class="field-hint">Requests stay removable with !remove until they're pushed into Spotify's real queue — it has no way to un-queue a track once that happens.</span>
+
+              <div class="commands-section-divider">
+                <span>OBS Now Playing Overlay</span>
+                <span class="field-hint">Completely optional — nothing happens unless you add this as a Browser Source in OBS.</span>
+              </div>
+              <div class="settings-field">
+                <label for="nowPlayingOverlayUrl">Browser Source URL</label>
+                <div class="settings-token-wrap">
+                  <input id="nowPlayingOverlayUrl" readonly>
+                  <button type="button" class="toggle-vis" id="copyNowPlayingOverlayUrl">Copy</button>
+                </div>
+                <span class="field-hint">Shows album art, title, artist, and a progress bar for whatever's currently playing.</span>
+              </div>
+
+              <div class="commands-section-divider">
+                <span>Who Can Use !sr</span>
+                <span class="field-hint">The broadcaster can always use it regardless of what's checked here. Sub tiers are "and up" — checking Tier 2 also allows Tier 3 subs.</span>
+              </div>
+              <div class="cmd-permission-checks" id="srChatPermissionChecks">
+                <label class="redeem-checkbox-label"><input type="checkbox" value="follower"> Follower (everyone)</label>
+                <label class="redeem-checkbox-label"><input type="checkbox" value="vip"> VIP</label>
+                <label class="redeem-checkbox-label"><input type="checkbox" value="moderator"> Moderator</label>
+                <label class="redeem-checkbox-label"><input type="checkbox" value="subT1"> Sub Tier 1 and up</label>
+                <label class="redeem-checkbox-label"><input type="checkbox" value="subT2"> Sub Tier 2 and up</label>
+                <label class="redeem-checkbox-label"><input type="checkbox" value="subT3"> Sub Tier 3 only</label>
+              </div>
+
+              <div class="commands-section-divider">
+                <span>Max Pending Requests Per Role</span>
+                <span class="field-hint">0 = unlimited. A viewer who qualifies for more than one role (e.g. a subscriber who's also a Moderator) gets whichever limit is highest.</span>
+              </div>
+              <div class="sr-tier-grid">
+                <div class="settings-field">
+                  <label for="srLimitFollower">Follower</label>
+                  <input id="srLimitFollower" type="number" min="0" value="1">
+                </div>
+                <div class="settings-field">
+                  <label for="srLimitVip">VIP</label>
+                  <input id="srLimitVip" type="number" min="0" value="2">
+                </div>
+                <div class="settings-field">
+                  <label for="srLimitModerator">Moderator</label>
+                  <input id="srLimitModerator" type="number" min="0" value="0">
+                </div>
+                <div class="settings-field">
+                  <label for="srLimitSubT1">Sub Tier 1</label>
+                  <input id="srLimitSubT1" type="number" min="0" value="2">
+                </div>
+                <div class="settings-field">
+                  <label for="srLimitSubT2">Sub Tier 2</label>
+                  <input id="srLimitSubT2" type="number" min="0" value="3">
+                </div>
+                <div class="settings-field">
+                  <label for="srLimitSubT3">Sub Tier 3</label>
+                  <input id="srLimitSubT3" type="number" min="0" value="5">
+                </div>
+              </div>
+
+              <button type="button" id="saveSongSettings" class="primary">Save Settings</button>
+            </div>
+
+            <div class="settings-section">
+              <p class="settings-section-label">Blocklist</p>
+              <div class="lists-container">
+                <div class="list-col">
+                  <div class="list-col-header">
+                    <h3>Blocked Users</h3>
+                    <span class="list-count" id="srBlockedUsersCount">0</span>
+                  </div>
+                  <textarea id="srBlockedUsersBox" spellcheck="false"></textarea>
+                </div>
+                <div class="list-col">
+                  <div class="list-col-header">
+                    <h3>Blocked Songs</h3>
+                    <span class="list-count" id="srBlockedSongsCount">0</span>
+                  </div>
+                  <span class="field-hint">Matched as substrings against the request text</span>
+                  <textarea id="srBlockedSongsBox" spellcheck="false"></textarea>
+                </div>
+                <div class="list-col">
+                  <div class="list-col-header">
+                    <h3>Blocked Artists</h3>
+                    <span class="list-count" id="srBlockedArtistsCount">0</span>
+                  </div>
+                  <span class="field-hint">Matched as substrings against the request text</span>
+                  <textarea id="srBlockedArtistsBox" spellcheck="false"></textarea>
+                </div>
+              </div>
+              <button type="button" id="saveSongBlocklist" class="primary">Save Blocklist</button>
+            </div>
+          </div>
+
+          <div class="sr-queue-col">
+            <div class="commands-header">
+              <h2>Queue</h2>
+              <span class="list-count" id="songQueueCount">0</span>
+              <button type="button" id="refreshSongQueue" class="logs-clear-btn">Refresh</button>
+            </div>
+            <div id="songQueueList" class="commands-list"></div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Command create/edit modal -->
+    <div class="modal-overlay" id="commandFormOverlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="commandFormTitle">New Command</h3>
+          <div class="modal-header-actions">
+            <button type="button" class="help-btn" id="cmdFormHelpBtn" title="Available placeholders">?</button>
+            <button type="button" class="modal-close" id="commandFormClose" aria-label="Close">✕</button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <div class="settings-field">
+            <label for="cmdTrigger">Trigger</label>
+            <input id="cmdTrigger" placeholder="!lurk" autocomplete="off">
+            <span class="field-hint field-error" id="cmdTriggerError"></span>
+          </div>
+
+          <div class="settings-field">
+            <label>Type</label>
+            <div class="cmd-type-toggle">
+              <button type="button" class="cmd-type-btn active" data-type="reply">Reply</button>
+              <button type="button" class="cmd-type-btn" data-type="counter">Counter</button>
+            </div>
+          </div>
+
+          <div id="cmdReplyFields">
+            <div class="settings-field">
+              <label>Reply text</label>
+              <div id="cmdRepliesList" class="cmd-replies-list"></div>
+              <button type="button" class="toggle-vis" id="addReplyVariant">+ Add random variant</button>
+              <span class="field-hint">Placeholders: {user}, {channel}, {args} (text typed after the command), {random:1-100}, {choice:a|b|c}. Add more than one reply and the bot picks one at random each time.</span>
+            </div>
+          </div>
+
+          <div id="cmdCounterFields" style="display:none;">
+            <div class="settings-field">
+              <label for="cmdCounterName">Counter name</label>
+              <input id="cmdCounterName" list="counterNamesList" placeholder="deaths" autocomplete="off">
+              <datalist id="counterNamesList"></datalist>
+              <span class="field-hint">Multiple commands can share a counter — e.g. one to view it, another to add to it.</span>
+            </div>
+            <div class="settings-field">
+              <label for="cmdCounterAction">Action</label>
+              <select id="cmdCounterAction">
+                <option value="view">View only</option>
+                <option value="increment">Increment</option>
+                <option value="decrement">Decrement</option>
+              </select>
+            </div>
+            <div class="settings-field" id="cmdCounterStepField" style="display:none;">
+              <label for="cmdCounterStep">Step amount</label>
+              <input id="cmdCounterStep" type="number" min="1" value="1">
+            </div>
+            <div class="settings-field">
+              <label for="cmdCounterTemplate">Reply text</label>
+              <input id="cmdCounterTemplate" placeholder="Deaths this stream: {value}" autocomplete="off">
+              <span class="field-hint">Placeholders: {value} (the counter), {user}, {channel}, {args}, {random:1-100}, {choice:a|b|c}.</span>
+            </div>
+          </div>
+
+          <div class="settings-field">
+            <label class="redeem-checkbox-label"><input type="checkbox" id="cmdSfxEnabled"> Also play a sound effect</label>
+          </div>
+
+          <div id="cmdSfxFields" style="display:none;">
+            <div class="settings-field">
+              <label for="cmdSfxFile">Sound file</label>
+              <div class="settings-token-wrap">
+                <input id="cmdSfxFile" readonly placeholder="No file chosen">
+                <button type="button" class="toggle-vis" id="chooseCmdSfxFile">Choose File…</button>
+              </div>
+              <span class="field-hint">Pick an mp3/wav/ogg from anywhere — a copy is saved into the app's sfx folder when you save this command.</span>
+            </div>
+          </div>
+
+          <div class="settings-field">
+            <label>Who can use it</label>
+            <div class="cmd-permission-checks" id="cmdPermissionChecks">
+              <label class="redeem-checkbox-label"><input type="checkbox" value="everyone"> Everyone</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="subscriber"> Subscriber (any tier)</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="subscriberT2"> Subscriber Tier 2 and up</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="subscriberT3"> Subscriber Tier 3 and up</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="moderator"> Moderator</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="broadcaster"> Broadcaster</label>
+            </div>
+            <span class="field-hint">Anyone matching at least one checked option can use this command. The broadcaster can always use every command, regardless of what's checked here.</span>
+          </div>
+
+          <div class="settings-field">
+            <label>Cooldown</label>
+            <div class="cmd-cooldown-row">
+              <div class="cmd-type-toggle cooldown-mode-toggle" id="cmdCooldownToggle">
+                <button type="button" class="cmd-type-btn cooldown-mode-btn active" data-mode="none">None</button>
+                <button type="button" class="cmd-type-btn cooldown-mode-btn" data-mode="global">Global</button>
+                <button type="button" class="cmd-type-btn cooldown-mode-btn" data-mode="peruser">Per-user</button>
+              </div>
+              <input id="cmdCooldownSeconds" type="number" min="1" value="10" placeholder="seconds" style="display:none;">
+            </div>
+            <input type="hidden" id="cmdCooldownMode" value="none">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="toggle-vis" id="commandFormCancel">Cancel</button>
+          <button type="button" class="primary" id="commandFormSave">Save Command</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Redeem create/edit modal -->
+    <div class="modal-overlay" id="redeemFormOverlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="redeemFormTitle">New Redeem</h3>
+          <div class="modal-header-actions">
+            <button type="button" class="modal-close" id="redeemFormClose" aria-label="Close">✕</button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <div class="settings-field" id="redeemManageableNotice" style="display:none;">
+            <span class="field-hint">This reward wasn't created by this app, so its title/cost/prompt can't be edited here — the action and constraints below still work on it.</span>
+          </div>
+
+          <div class="settings-field">
+            <label for="redeemTitle">Title</label>
+            <input id="redeemTitle" placeholder="Pole Roll" autocomplete="off">
+          </div>
+
+          <div class="settings-field">
+            <label for="redeemCost">Cost (points)</label>
+            <input id="redeemCost" type="number" min="1" value="100">
+          </div>
+
+          <div class="settings-field">
+            <label for="redeemPrompt">Prompt (shown to viewers)</label>
+            <textarea id="redeemPrompt" rows="2" placeholder="Optional description..."></textarea>
+          </div>
+
+          <div class="settings-field">
+            <label class="redeem-checkbox-label"><input type="checkbox" id="redeemRequireInput"> Require viewers to enter text</label>
+          </div>
+
+          <div class="settings-field">
+            <label>Background color</label>
+            <button type="button" class="color-picker-field-btn" id="redeemColorTrigger" aria-label="Pick a background color" title="Pick a background color…">
+              <span class="color-picker-swatch" id="redeemColorSwatch"></span>
+              <span class="color-picker-hex" id="redeemColorHexLabel">#8B5CF6</span>
+            </button>
+            <input type="hidden" id="redeemColor" value="#8b5cf6">
+          </div>
+
+          <div class="settings-field">
+            <label class="redeem-checkbox-label"><input type="checkbox" id="redeemEnabledOnTwitch" checked> Visible to viewers on Twitch</label>
+          </div>
+
+          <div class="settings-field">
+            <label class="redeem-checkbox-label"><input type="checkbox" id="redeemSkipQueue"> Skip Reward Queue (auto-fulfill instantly)</label>
+            <span class="field-hint field-error" id="redeemSkipQueueWarning">Turning this on means the sub-tier/cooldown constraints below can't be enforced — Twitch fulfills the redemption before this bot gets a chance to check.</span>
+          </div>
+
+          <div class="commands-section-divider" style="margin-top:4px;">Bot Behavior</div>
+
+          <div class="settings-field">
+            <label>Action</label>
+            <div class="cmd-type-toggle">
+              <button type="button" class="cmd-type-btn redeem-action-btn active" data-action="message">Message</button>
+              <button type="button" class="cmd-type-btn redeem-action-btn" data-action="counter">Counter</button>
+              <button type="button" class="cmd-type-btn redeem-action-btn" data-action="snackCheckin">Snack Check-in</button>
+              <button type="button" class="cmd-type-btn redeem-action-btn" data-action="sfx">Sound Effect</button>
+            </div>
+          </div>
+
+          <div id="redeemMessageFields">
+            <div class="settings-field">
+              <label>Reply text</label>
+              <div id="redeemRepliesList" class="cmd-replies-list"></div>
+              <button type="button" class="toggle-vis" id="addRedeemReplyVariant">+ Add random variant</button>
+              <span class="field-hint">Placeholders: {user}, {channel}, {input} (if text input is required), {random:1-100}, {choice:a|b|c}.</span>
+            </div>
+          </div>
+
+          <div id="redeemCounterFields" style="display:none;">
+            <div class="settings-field">
+              <label for="redeemCounterName">Counter name</label>
+              <input id="redeemCounterName" list="redeemCounterNamesList" placeholder="deaths" autocomplete="off">
+              <datalist id="redeemCounterNamesList"></datalist>
+              <span class="field-hint">Shares the same counters as custom commands — reuse a name to link them together.</span>
+            </div>
+            <div class="settings-field">
+              <label for="redeemCounterAction">Action</label>
+              <select id="redeemCounterAction">
+                <option value="view">View only</option>
+                <option value="increment">Increment</option>
+                <option value="decrement">Decrement</option>
+              </select>
+            </div>
+            <div class="settings-field" id="redeemCounterStepField" style="display:none;">
+              <label for="redeemCounterStep">Step amount</label>
+              <input id="redeemCounterStep" type="number" min="1" value="1">
+            </div>
+            <div class="settings-field">
+              <label for="redeemCounterTemplate">Reply text</label>
+              <input id="redeemCounterTemplate" placeholder="Deaths this stream: {value}" autocomplete="off">
+              <span class="field-hint">Placeholders: {value}, {user}, {channel}, {input}, {random:1-100}, {choice:a|b|c}.</span>
+            </div>
+          </div>
+
+          <div id="redeemSnackFields" style="display:none;">
+            <div class="settings-field">
+              <label for="redeemSnackAmount">Snacks to add</label>
+              <input id="redeemSnackAmount" type="number" min="1" value="1">
+            </div>
+            <div class="settings-field">
+              <label for="redeemSnackTemplate">Reply text</label>
+              <input id="redeemSnackTemplate" placeholder="{user} now has {value} Smoky snack(s)!" autocomplete="off">
+              <span class="field-hint">Placeholders: {value} (new total), {user}, {channel}, {random:1-100}, {choice:a|b|c}.</span>
+            </div>
+          </div>
+
+          <div id="redeemSfxFields" style="display:none;">
+            <div class="settings-field">
+              <label for="redeemSfxFile">Sound file</label>
+              <div class="settings-token-wrap">
+                <input id="redeemSfxFile" readonly placeholder="No file chosen">
+                <button type="button" class="toggle-vis" id="chooseRedeemSfxFile">Choose File…</button>
+              </div>
+              <span class="field-hint">Pick an mp3/wav/ogg from anywhere — a copy is saved into the app's sfx folder when you save this redeem.</span>
+            </div>
+          </div>
+
+          <div class="settings-field">
+            <label>Minimum sub tier</label>
+            <div class="cmd-permission-checks" id="redeemMinTierChecks">
+              <label class="redeem-checkbox-label"><input type="checkbox" value="0"> Everyone</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="1000"> Tier 1 and up</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="2000"> Tier 2 and up</label>
+              <label class="redeem-checkbox-label"><input type="checkbox" value="3000"> Tier 3 only</label>
+            </div>
+          </div>
+
+          <div class="settings-field">
+            <label>Cooldown</label>
+            <div class="cmd-cooldown-row">
+              <div class="cmd-type-toggle cooldown-mode-toggle" id="redeemCooldownToggle">
+                <button type="button" class="cmd-type-btn cooldown-mode-btn active" data-mode="none">None</button>
+                <button type="button" class="cmd-type-btn cooldown-mode-btn" data-mode="global">Global</button>
+                <button type="button" class="cmd-type-btn cooldown-mode-btn" data-mode="peruser">Per-user</button>
+              </div>
+              <input id="redeemCooldownSeconds" type="number" min="1" value="10" placeholder="seconds" style="display:none;">
+            </div>
+            <input type="hidden" id="redeemCooldownMode" value="none">
+          </div>
+
+          <div class="settings-field">
+            <label class="redeem-checkbox-label"><input type="checkbox" id="redeemConfigEnabled" checked> Bot behavior active</label>
+            <span class="field-hint">Turn off to stop the bot from acting on this redeem without touching the reward on Twitch.</span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="modal-delete-btn" id="redeemFormDelete" style="display:none;">Delete</button>
+          <button type="button" class="toggle-vis" id="redeemFormCancel">Cancel</button>
+          <button type="button" class="primary" id="redeemFormSave">Save Redeem</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placeholder reference — content built live from BUILTIN_COMMANDS + the
+         message catalog in main.js, so it can't drift out of date. -->
+    <div class="modal-overlay" id="placeholderHelpOverlay">
+      <div class="modal placeholder-help-modal">
+        <div class="modal-header">
+          <h3>Available Placeholders</h3>
+          <button type="button" class="modal-close" id="placeholderHelpClose" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body" id="placeholderHelpBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="titlebar.js"></script>
+  <script src="sideRays.js"></script>
+  <script src="borderGlow.js"></script>
+  <script src="main.js"></script>
+</body>
+
+</html>

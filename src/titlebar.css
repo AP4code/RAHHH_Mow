@@ -1,0 +1,137 @@
+.titlebar {
+    height: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    background: rgba(10, 8, 20, 0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border-bottom: 1px solid rgba(var(--accent-light-rgb), 0.14);
+    -webkit-user-select: none;
+    user-select: none;
+    position: relative;
+    z-index: 10000;
+}
+
+.titlebar-drag {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding-left: 14px;
+    gap: 8px;
+}
+
+.titlebar-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--accent-light);
+    opacity: 0.75;
+}
+
+.titlebar-controls {
+    display: flex;
+}
+
+.tb-btn {
+    width: 46px;
+    border: none;
+    background: transparent;
+    color: var(--accent-glow);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tb-btn:hover {
+    background: rgba(var(--accent-light-rgb), 0.16);
+    color: #fff;
+}
+
+.tb-btn:active {
+    background: rgba(var(--accent-light-rgb), 0.26);
+}
+
+.tb-close:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.tb-close:active {
+    background: #b91c1c;
+}
+
+/* Manual resize handles — required because decorations:false drops native
+   edge hit-testing on Windows. */
+.resize-handle {
+    position: fixed;
+    z-index: 10001;
+}
+
+.rh-n,
+.rh-s {
+    left: 6px;
+    right: 6px;
+    height: 5px;
+    cursor: ns-resize;
+}
+
+.rh-n {
+    top: 0;
+}
+
+.rh-s {
+    bottom: 0;
+}
+
+.rh-e,
+.rh-w {
+    top: 6px;
+    bottom: 6px;
+    width: 5px;
+    cursor: ew-resize;
+}
+
+.rh-e {
+    right: 0;
+}
+
+.rh-w {
+    left: 0;
+}
+
+.rh-ne,
+.rh-nw,
+.rh-se,
+.rh-sw {
+    width: 10px;
+    height: 10px;
+}
+
+.rh-ne {
+    top: 0;
+    right: 0;
+    cursor: nesw-resize;
+}
+
+.rh-nw {
+    top: 0;
+    left: 0;
+    cursor: nwse-resize;
+}
+
+.rh-se {
+    bottom: 0;
+    right: 0;
+    cursor: nwse-resize;
+}
+
+.rh-sw {
+    bottom: 0;
+    left: 0;
+    cursor: nesw-resize;
+}

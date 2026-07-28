@@ -1,0 +1,45 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Secrets and runtime state — never commit these. config/.env holds live
+# Twitch/Spotify OAuth tokens and client secrets; data/ holds this
+# installation's actual custom commands, lists, queue, points, etc.
+config/.env
+data/*.json
+
+# Bundled Node runtime — large binary, CI fetches its own copy at build
+# time (see .github/workflows/release.yml) rather than this being committed.
+/node/
+
+# User-added sound files — personal to this installation, not app code.
+# sfxServer.js already recreates this folder on startup if it's missing.
+/sfx/*
+
+# Rust build output and Tauri's generated schema files.
+src-tauri/target/
+src-tauri/gen/
+
+# Local Claude Code tool permissions — machine-specific, not app config.
+**/.claude/settings.local.json
