@@ -573,20 +573,11 @@ async function refreshDashboard() {
       ? `${GREETING_LABELS[period]}, ${streamerName}`
       : `${GREETING_LABELS[period]},`;
 
-    document.getElementById("channelName").textContent =
-      env.TARGET_CHANNEL_LOGIN || "—";
-
     document.getElementById("allowCount").textContent =
       stats.allowlist;
 
     document.getElementById("vipCount").textContent =
       stats.viplist;
-
-    document.getElementById("lastSO").textContent =
-      stats.lastShoutout || "None";
-
-    document.getElementById("streamState").textContent =
-      stats.live ? "Live" : "Offline";
   } catch (e) {
     console.error(e);
   }
@@ -594,7 +585,7 @@ async function refreshDashboard() {
   try {
     const now = await invoke("load_list", { name: "nowPlaying" });
     document.getElementById("dashboardNowPlaying").textContent = now
-      ? `${now.title} — ${now.artist} ${now.isPlaying ? "▶" : "⏸"}`
+      ? `${now.title} - ${now.artist} ${now.isPlaying ? "▶" : "⏸"}`
       : "—";
   } catch (e) {
     document.getElementById("dashboardNowPlaying").textContent = "—";
@@ -900,7 +891,7 @@ document.getElementById("checkForUpdates").onclick = async () => {
       return;
     }
 
-    statusEl.textContent = `Update ${update.version} found — downloading…`;
+    statusEl.textContent = `Update ${update.version} found, downloading…`;
     let downloaded = 0;
     let total = 0;
 
@@ -913,7 +904,7 @@ document.getElementById("checkForUpdates").onclick = async () => {
           ? `Downloading… ${Math.round((downloaded / total) * 100)}%`
           : "Downloading…";
       } else if (event.event === "Finished") {
-        statusEl.textContent = "Installed — restarting…";
+        statusEl.textContent = "Installed, restarting…";
       }
     });
 
@@ -1126,7 +1117,7 @@ async function loadClips() {
     const usersRes = await fetch(`https://api.twitch.tv/helix/users?login=${channel}`, { headers });
     const usersData = await usersRes.json();
     const broadcasterId = usersData.data?.[0]?.id;
-    if (!broadcasterId) throw new Error("Could not resolve broadcaster ID — check your token.");
+    if (!broadcasterId) throw new Error("Could not resolve broadcaster ID, check your token.");
 
     let startedAt = null;
     let streamLabel = "";
@@ -1325,12 +1316,12 @@ async function loadCheckInRewards() {
   try {
     const rewards = await fetchRewardsFromTwitch();
     select.innerHTML =
-      '<option value="">— none selected —</option>' +
+      '<option value="">(none selected)</option>' +
       rewards.map((r) => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join("");
     select.value = checkInPendingRedeemId || "";
   } catch (e) {
     console.error("[CHECKIN] Failed to load rewards:", e);
-    select.innerHTML = `<option value="">Couldn't load rewards — ${escapeHtml(e.message || String(e))}</option>`;
+    select.innerHTML = `<option value="">Couldn't load rewards: ${escapeHtml(e.message || String(e))}</option>`;
   }
 }
 
@@ -1407,7 +1398,7 @@ async function loadSnacksPage() {
     renderSnacks();
     snacksLoaded = true;
   } catch (e) {
-    list.innerHTML = `<div class="snacks-empty">Could not load snacks.json — ${e}</div>`;
+    list.innerHTML = `<div class="snacks-empty">Could not load snacks.json: ${e}</div>`;
   }
 }
 
@@ -1516,7 +1507,7 @@ function startSnackEdit(row, user, currentCount) {
 // checking against custom triggers. `trigger` is null for pattern-match
 // commands (like !w's "wwww" match) that aren't a literal !command.
 const BUILTIN_COMMANDS = [
-  { key: "w", trigger: null, label: 'Repeated "w"s (e.g. "wwww")', description: "Fun pattern-match reply — not a literal !command." },
+  { key: "w", trigger: null, label: 'Repeated "w"s (e.g. "wwww")', description: "Fun pattern-match reply, not a literal !command." },
   { key: "ssnacks", trigger: "!ssnacks", description: "Looks up a user's Smoky snack count." },
   { key: "topsnacks", trigger: "!topsnacks", description: "Shows the top 3 snack counts." },
   { key: "forcereset", trigger: "!forcereset", description: "Mod/broadcaster only. Resets session shoutout tracking." },
@@ -1528,7 +1519,10 @@ const BUILTIN_COMMANDS = [
   { key: "coinPause", trigger: "!p", description: "Mod/broadcaster only. Pauses/resumes the coin toss game." },
   { key: "coin", trigger: "!coin", description: "Responds to an active coin toss challenge." },
   { key: "songRequest", trigger: null, label: "!sr (configurable in Song Requests)", description: "Requests a song via chat, if enabled." },
-  { key: "removeRequest", trigger: "!remove", description: "Removes a pending song request — yours, or anyone's if you're a mod." },
+  { key: "removeRequest", trigger: "!remove", description: "Removes a pending song request, yours, or anyone's if you're a mod." },
+  { key: "song", trigger: "!song", description: "Shows the currently playing song, and who requested it if it was a request." },
+  { key: "queue", trigger: "!queue", description: "Shows upcoming songs. !queue N shows N instead of the configured default." },
+  { key: "next", trigger: "!next", description: "Shows the very next upcoming song." },
 ];
 
 const PERMISSION_LABELS = {
@@ -1622,7 +1616,7 @@ function renderCustomCommandsList() {
   document.getElementById("customCommandsCount").textContent = customCommandsData.length;
 
   if (!customCommandsData.length) {
-    list.innerHTML = '<div class="commands-empty">No custom commands yet — click "+ New Command" to add one.</div>';
+    list.innerHTML = '<div class="commands-empty">No custom commands yet. Click "+ New Command" to add one.</div>';
     return;
   }
 
@@ -1770,14 +1764,14 @@ const CUSTOM_COMMAND_PLACEHOLDERS = [
   { name: "user", description: "The chatter who used the command." },
   { name: "channel", description: "Your channel name." },
   { name: "args", description: "Whatever text was typed after the command." },
-  { name: "value", description: "The counter's current value — counter commands only." },
+  { name: "value", description: "The counter's current value (counter commands only)." },
 ];
 
 const REDEEM_PLACEHOLDERS = [
   { name: "user", description: "The viewer who redeemed it." },
   { name: "channel", description: "Your channel name." },
   { name: "input", description: "The text they entered, if the redeem requires input." },
-  { name: "value", description: "The counter's current value — Counter redeems only." },
+  { name: "value", description: "The counter's current value (Counter redeems only)." },
 ];
 
 function placeholderRow(name, description) {
@@ -2188,7 +2182,7 @@ async function getStreamerHelixContext() {
   const userRes = await fetch(`https://api.twitch.tv/helix/users?login=${broadcasterLogin}`, { headers });
   const userData = await userRes.json();
   const broadcasterId = userData.data?.[0]?.id;
-  if (!broadcasterId) throw new Error("Could not resolve broadcaster ID — check your streamer token.");
+  if (!broadcasterId) throw new Error("Could not resolve broadcaster ID, check your streamer token.");
 
   return { headers, broadcasterId };
 }
@@ -2207,7 +2201,7 @@ async function fetchRewardsFromTwitch() {
   if (!allRes.ok) {
     const errBody = await allRes.json().catch(() => ({}));
     throw new Error(
-      errBody.message || `Twitch returned ${allRes.status} — your streamer token likely needs the channel:manage:redemptions scope.`
+      errBody.message || `Twitch returned ${allRes.status}. Your streamer token likely needs the channel:manage:redemptions scope.`
     );
   }
 
@@ -2231,7 +2225,7 @@ async function loadRedeemsPage() {
 
   if (rewardsResult.status === "rejected") {
     console.error("[REDEEMS] Failed to load rewards:", rewardsResult.reason);
-    list.innerHTML = `<div class="commands-empty">Couldn't load redeems from Twitch — ${escapeHtml(
+    list.innerHTML = `<div class="commands-empty">Couldn't load redeems from Twitch: ${escapeHtml(
       String(rewardsResult.reason.message || rewardsResult.reason)
     )}</div>`;
     document.getElementById("redeemsCount").textContent = "0";
@@ -2279,7 +2273,7 @@ function renderRedeemsList() {
   document.getElementById("redeemsCount").textContent = redeemsData.length;
 
   if (!redeemsData.length) {
-    list.innerHTML = '<div class="commands-empty">No Channel Points rewards yet — click "+ New Redeem" to add one.</div>';
+    list.innerHTML = '<div class="commands-empty">No Channel Points rewards yet. Click "+ New Redeem" to add one.</div>';
     return;
   }
 
@@ -2308,7 +2302,7 @@ function renderRedeemsList() {
       </div>
       ${
         skipQueueRisk
-          ? '<div class="redeem-warning-banner">⚠ Skip Reward Queue is on — the constraints above can\'t actually be enforced for this redeem.</div>'
+          ? '<div class="redeem-warning-banner">⚠ Skip Reward Queue is on. The constraints above can\'t actually be enforced for this redeem.</div>'
           : ""
       }
     `;
@@ -2362,6 +2356,7 @@ const redeemSnackTemplate = document.getElementById("redeemSnackTemplate");
 const redeemMinTierChecks = document.getElementById("redeemMinTierChecks");
 const redeemCooldownMode = document.getElementById("redeemCooldownMode");
 const redeemCooldownSeconds = document.getElementById("redeemCooldownSeconds");
+const redeemSfxQueueNote = document.getElementById("redeemSfxQueueNote");
 const redeemConfigEnabled = document.getElementById("redeemConfigEnabled");
 
 function getCheckedMinTiers() {
@@ -2423,6 +2418,7 @@ document.querySelectorAll(".redeem-action-btn").forEach((btn) => {
     redeemCounterFields.style.display = currentRedeemAction === "counter" ? "" : "none";
     redeemSnackFields.style.display = currentRedeemAction === "snackCheckin" ? "" : "none";
     redeemSfxFields.style.display = currentRedeemAction === "sfx" ? "" : "none";
+    redeemSfxQueueNote.style.display = currentRedeemAction === "sfx" ? "" : "none";
   };
 });
 
@@ -2492,6 +2488,7 @@ function openRedeemForm(reward = null) {
   redeemCounterFields.style.display = currentRedeemAction === "counter" ? "" : "none";
   redeemSnackFields.style.display = currentRedeemAction === "snackCheckin" ? "" : "none";
   redeemSfxFields.style.display = currentRedeemAction === "sfx" ? "" : "none";
+  redeemSfxQueueNote.style.display = currentRedeemAction === "sfx" ? "" : "none";
   pendingRedeemSfxPath = null;
   redeemSfxFile.value = cfg?.sfxFile || "";
 
@@ -2764,6 +2761,7 @@ async function loadSongsPage() {
     document.getElementById("srCooldown").value = settings.cooldownSeconds || 0;
     document.getElementById("srMaxDuration").value = settings.maxDurationMinutes || 0;
     document.getElementById("srPromoteBeforeEnd").value = settings.promoteBeforeEndSeconds || 5;
+    document.getElementById("srQueueDisplayCount").value = settings.queueDisplayCount || 4;
     document.getElementById("srPlaylistId").value = settings.addToPlaylistId || "";
 
     const allowedChatRoles = settings.chatPermissions || ["follower"];
@@ -2807,12 +2805,12 @@ async function loadSongRequestRewards() {
   try {
     const rewards = await fetchRewardsFromTwitch();
     select.innerHTML =
-      '<option value="">— none selected —</option>' +
+      '<option value="">(none selected)</option>' +
       rewards.map((r) => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join("");
     select.value = songRequestsPendingRedeemId || "";
   } catch (e) {
     console.error("[SONGREQ] Failed to load rewards:", e);
-    select.innerHTML = `<option value="">Couldn't load rewards — ${escapeHtml(e.message || String(e))}</option>`;
+    select.innerHTML = `<option value="">Couldn't load rewards: ${escapeHtml(e.message || String(e))}</option>`;
   }
 }
 
@@ -2905,6 +2903,7 @@ document.getElementById("saveSongSettings").onclick = async () => {
       cooldownSeconds: parseInt(document.getElementById("srCooldown").value, 10) || 0,
       maxDurationMinutes: parseInt(document.getElementById("srMaxDuration").value, 10) || 0,
       promoteBeforeEndSeconds: parseInt(document.getElementById("srPromoteBeforeEnd").value, 10) || 5,
+      queueDisplayCount: parseInt(document.getElementById("srQueueDisplayCount").value, 10) || 4,
       addToPlaylistId: document.getElementById("srPlaylistId").value.trim(),
       chatPermissions: Array.from(
         document.querySelectorAll('#srChatPermissionChecks input[type="checkbox"]:checked')

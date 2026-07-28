@@ -30,6 +30,16 @@ async function addToQueue(uri) {
   await spotifyApi({ method: "post", url: `${BASE}/me/player/queue`, params: { uri } });
 }
 
+/**
+ * Returns { currently_playing, queue: [...] } — Spotify's own device queue,
+ * which already reflects anything this app has promoted into it via
+ * addToQueue above.
+ */
+async function getQueue() {
+  const { data } = await spotifyApi({ method: "get", url: `${BASE}/me/player/queue` });
+  return data;
+}
+
 async function addToPlaylist(playlistId, uri) {
   if (!playlistId) return;
   await spotifyApi({
@@ -39,4 +49,4 @@ async function addToPlaylist(playlistId, uri) {
   });
 }
 
-module.exports = { searchTrack, getPlaybackState, addToQueue, addToPlaylist };
+module.exports = { searchTrack, getPlaybackState, addToQueue, getQueue, addToPlaylist };

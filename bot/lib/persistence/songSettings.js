@@ -34,6 +34,9 @@ const DEFAULTS = {
   // pending request actually gets pushed into Spotify's real queue — the
   // window during which !remove still works (see lib/songQueueScheduler.js).
   promoteBeforeEndSeconds: 5,
+  // Default song count for !queue when no number is given (e.g. "!queue 6"
+  // overrides this for that one call).
+  queueDisplayCount: 4,
   addToPlaylistId: "",
 };
 

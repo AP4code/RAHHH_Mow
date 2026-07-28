@@ -32,6 +32,15 @@ body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     display: flex;
     flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Only actual editable/copyable fields get text selection back — labels,
+   buttons, hints, and everything else in the chrome stays unselectable. */
+input, textarea, select {
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .app {

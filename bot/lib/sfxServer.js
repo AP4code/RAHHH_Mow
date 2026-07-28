@@ -69,11 +69,35 @@ const OVERLAY_HTML = `<!doctype html>
 <head><meta charset="utf-8"><title>SFX overlay</title></head>
 <body style="margin:0;background:transparent;overflow:hidden;">
 <script>
+  // Every triggered sound goes on this queue and plays one at a time, back
+  // to back — nothing is ever dropped for arriving close together (several
+  // redemptions landing in the same second, say), and they don't overlap
+  // into a garbled mess either. A failed file (bad playback, missing file)
+  // just gets skipped so it can't wedge everything queued behind it.
+  const queue = [];
+  let playing = false;
+
+  function playNext() {
+    if (playing) return;
+    const file = queue.shift();
+    if (!file) return;
+
+    playing = true;
+    const audio = new Audio("/files/" + encodeURIComponent(file));
+    const advance = () => { playing = false; playNext(); };
+    audio.addEventListener("ended", advance);
+    audio.addEventListener("error", advance);
+    audio.play().catch((err) => {
+      console.error("[SFX overlay] playback failed:", err);
+      advance();
+    });
+  }
+
   const es = new EventSource("/events");
   es.onmessage = (e) => {
     const { file } = JSON.parse(e.data);
-    const audio = new Audio("/files/" + encodeURIComponent(file));
-    audio.play().catch((err) => console.error("[SFX overlay] playback failed:", err));
+    queue.push(file);
+    playNext();
   };
 </script>
 </body>

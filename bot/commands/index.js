@@ -27,6 +27,9 @@ const commands = [
   require("./coin"),
   require("./songRequest"),
   require("./removeRequest"),
+  require("./song"),
+  require("./queue"),
+  require("./next"),
   require("./customCommands"),
 ];
 

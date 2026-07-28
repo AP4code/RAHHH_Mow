@@ -73,24 +73,12 @@
 
           <div class="status-card">
             <div class="status-row">
-              <span>Channel</span>
-              <span id="channelName">—</span>
-            </div>
-            <div class="status-row">
               <span>Allowlist</span>
               <span id="allowCount">—</span>
             </div>
             <div class="status-row">
               <span>VIPs</span>
               <span id="vipCount">—</span>
-            </div>
-            <div class="status-row">
-              <span>Last SO</span>
-              <span id="lastSO">None</span>
-            </div>
-            <div class="status-row">
-              <span>Stream</span>
-              <span id="streamState">Unknown</span>
             </div>
             <div class="status-row">
               <span>Now Playing</span>
@@ -111,7 +99,7 @@
               <h3>Allowlist</h3>
               <span class="list-count" id="allowlistCount">0</span>
             </div>
-            <span class="field-hint">Auto-shoutout eligible chatters — one username per line</span>
+            <span class="field-hint">Auto-shoutout eligible chatters, one username per line</span>
             <textarea id="allowlistBox" spellcheck="false"></textarea>
           </div>
 
@@ -120,7 +108,7 @@
               <h3>VIP List</h3>
               <span class="list-count" id="viplistCount">0</span>
             </div>
-            <span class="field-hint">Always shouted out on first message — one username per line</span>
+            <span class="field-hint">Always shouted out on first message, one username per line</span>
             <textarea id="viplistBox" spellcheck="false"></textarea>
           </div>
         </div>
@@ -169,7 +157,7 @@
                 <input id="downloadLocation" placeholder="C:\Users\you\Videos\Clips">
                 <button type="button" class="toggle-vis" id="browseDownloadLocation">Browse…</button>
               </div>
-              <span class="field-hint">Where downloaded clips are saved — leave blank for your Downloads folder</span>
+              <span class="field-hint">Where downloaded clips are saved, leave blank for your Downloads folder</span>
             </div>
             <div class="settings-field">
               <label for="sfxOverlayUrl">SFX Browser Source URL</label>
@@ -177,7 +165,7 @@
                 <input id="sfxOverlayUrl" readonly>
                 <button type="button" class="toggle-vis" id="copySfxOverlayUrl">Copy</button>
               </div>
-              <span class="field-hint">Add this as a Browser Source in OBS — one source plays every sound effect</span>
+              <span class="field-hint">Add this as a Browser Source in OBS, one source plays every sound effect</span>
             </div>
             <div class="settings-field">
               <label for="timeTimezoneBtn">!time Timezone</label>
@@ -200,7 +188,7 @@
                 </button>
                 <button type="button" class="toggle-vis" id="resetAccentColor">Reset</button>
               </div>
-              <span class="field-hint">Recolors the whole UI instantly — no save or restart needed</span>
+              <span class="field-hint">Recolors the whole UI instantly, no save or restart needed</span>
 
               <!-- Positioned via inline style (position:fixed + top/left) set in JS,
                    moved to a direct child of <body> at init — same reasoning as
@@ -233,7 +221,7 @@
 
             <div class="commands-section-divider">
               <span>Twitch App</span>
-              <span class="field-hint">Create an app at the Twitch Developer Console, then paste its Client ID/Secret here — the Connect buttons below use these to authorize each account.</span>
+              <span class="field-hint">Create an app at the Twitch Developer Console, then paste its Client ID/Secret here. The Connect buttons below use these to authorize each account.</span>
             </div>
             <div class="settings-field">
               <span class="field-hint">ADD THE REDIRECT URI SHOWN BELOW TO YOUR APP'S "OAUTH REDIRECT URLS" ON TWITCH'S DEVELOPER CONSOLE, OR THE CONNECT BUTTONS WON'T WORK.</span>
@@ -386,7 +374,7 @@
                 <div class="settings-field">
                   <label for="ciRedeemSelect">Which redeem triggers a check-in</label>
                   <select id="ciRedeemSelect"><option value="">Loading rewards…</option></select>
-                  <span class="field-hint">Only one existing Twitch reward can trigger a check-in — create it on Twitch first, then pick it here.</span>
+                  <span class="field-hint">Only one existing Twitch reward can trigger a check-in. Create it on Twitch first, then pick it here.</span>
                 </div>
                 <div class="settings-field">
                   <label for="ciPointsPerCheckIn">Points per check-in</label>
@@ -429,7 +417,7 @@
 
           <div class="commands-section-divider">
             <span>Built-in Commands</span>
-            <span class="field-hint">Shown so new triggers don't collide — some allow editing their reply text, but never their trigger or logic.</span>
+            <span class="field-hint">Shown so new triggers don't collide. Some allow editing their reply text, but never their trigger or logic.</span>
           </div>
           <div id="builtinCommandsList" class="commands-list"></div>
         </div>
@@ -518,15 +506,20 @@
                   <input id="srPromoteBeforeEnd" type="number" min="1" value="5">
                 </div>
                 <div class="settings-field">
+                  <label for="srQueueDisplayCount">Songs shown by !queue</label>
+                  <input id="srQueueDisplayCount" type="number" min="1" value="4">
+                  <span class="field-hint">Default count when nobody types a number, e.g. !queue 6</span>
+                </div>
+                <div class="settings-field">
                   <label for="srPlaylistId">Also add to Spotify playlist (optional)</label>
                   <input id="srPlaylistId" placeholder="Spotify playlist ID">
                 </div>
               </div>
-              <span class="field-hint">Requests stay removable with !remove until they're pushed into Spotify's real queue — it has no way to un-queue a track once that happens.</span>
+              <span class="field-hint">Requests stay removable with !remove until they're pushed into Spotify's real queue. It has no way to un-queue a track once that happens.</span>
 
               <div class="commands-section-divider">
                 <span>OBS Now Playing Overlay</span>
-                <span class="field-hint">Completely optional — nothing happens unless you add this as a Browser Source in OBS.</span>
+                <span class="field-hint">Completely optional. Nothing happens unless you add this as a Browser Source in OBS.</span>
               </div>
               <div class="settings-field">
                 <label for="nowPlayingOverlayUrl">Browser Source URL</label>
@@ -539,7 +532,7 @@
 
               <div class="commands-section-divider">
                 <span>Who Can Use !sr</span>
-                <span class="field-hint">The broadcaster can always use it regardless of what's checked here. Sub tiers are "and up" — checking Tier 2 also allows Tier 3 subs.</span>
+                <span class="field-hint">The broadcaster can always use it regardless of what's checked here. Sub tiers are "and up": checking Tier 2 also allows Tier 3 subs.</span>
               </div>
               <div class="cmd-permission-checks" id="srChatPermissionChecks">
                 <label class="redeem-checkbox-label"><input type="checkbox" value="follower"> Follower (everyone)</label>
@@ -669,7 +662,7 @@
               <label for="cmdCounterName">Counter name</label>
               <input id="cmdCounterName" list="counterNamesList" placeholder="deaths" autocomplete="off">
               <datalist id="counterNamesList"></datalist>
-              <span class="field-hint">Multiple commands can share a counter — e.g. one to view it, another to add to it.</span>
+              <span class="field-hint">Multiple commands can share a counter, e.g. one to view it, another to add to it.</span>
             </div>
             <div class="settings-field">
               <label for="cmdCounterAction">Action</label>
@@ -701,7 +694,7 @@
                 <input id="cmdSfxFile" readonly placeholder="No file chosen">
                 <button type="button" class="toggle-vis" id="chooseCmdSfxFile">Choose File…</button>
               </div>
-              <span class="field-hint">Pick an mp3/wav/ogg from anywhere — a copy is saved into the app's sfx folder when you save this command.</span>
+              <span class="field-hint">Pick an mp3/wav/ogg from anywhere, a copy is saved into the app's sfx folder when you save this command.</span>
             </div>
           </div>
 
@@ -751,7 +744,7 @@
 
         <div class="modal-body">
           <div class="settings-field" id="redeemManageableNotice" style="display:none;">
-            <span class="field-hint">This reward wasn't created by this app, so its title/cost/prompt can't be edited here — the action and constraints below still work on it.</span>
+            <span class="field-hint">This reward wasn't created by this app, so its title/cost/prompt can't be edited here. The action and constraints below still work on it.</span>
           </div>
 
           <div class="settings-field">
@@ -788,7 +781,7 @@
 
           <div class="settings-field">
             <label class="redeem-checkbox-label"><input type="checkbox" id="redeemSkipQueue"> Skip Reward Queue (auto-fulfill instantly)</label>
-            <span class="field-hint field-error" id="redeemSkipQueueWarning">Turning this on means the sub-tier/cooldown constraints below can't be enforced — Twitch fulfills the redemption before this bot gets a chance to check.</span>
+            <span class="field-hint field-error" id="redeemSkipQueueWarning">Turning this on means the sub-tier/cooldown constraints below can't be enforced. Twitch fulfills the redemption before this bot gets a chance to check.</span>
           </div>
 
           <div class="commands-section-divider" style="margin-top:4px;">Bot Behavior</div>
@@ -817,7 +810,7 @@
               <label for="redeemCounterName">Counter name</label>
               <input id="redeemCounterName" list="redeemCounterNamesList" placeholder="deaths" autocomplete="off">
               <datalist id="redeemCounterNamesList"></datalist>
-              <span class="field-hint">Shares the same counters as custom commands — reuse a name to link them together.</span>
+              <span class="field-hint">Shares the same counters as custom commands, reuse a name to link them together.</span>
             </div>
             <div class="settings-field">
               <label for="redeemCounterAction">Action</label>
@@ -857,7 +850,7 @@
                 <input id="redeemSfxFile" readonly placeholder="No file chosen">
                 <button type="button" class="toggle-vis" id="chooseRedeemSfxFile">Choose File…</button>
               </div>
-              <span class="field-hint">Pick an mp3/wav/ogg from anywhere — a copy is saved into the app's sfx folder when you save this redeem.</span>
+              <span class="field-hint">Pick an mp3/wav/ogg from anywhere, a copy is saved into the app's sfx folder when you save this redeem.</span>
             </div>
           </div>
 
@@ -882,6 +875,10 @@
               <input id="redeemCooldownSeconds" type="number" min="1" value="10" placeholder="seconds" style="display:none;">
             </div>
             <input type="hidden" id="redeemCooldownMode" value="none">
+          </div>
+
+          <div class="settings-field" id="redeemSfxQueueNote" style="display:none;">
+            <span class="field-hint">If several eligible redemptions land at once, their sounds queue and play back-to-back instead of overlapping.</span>
           </div>
 
           <div class="settings-field">
