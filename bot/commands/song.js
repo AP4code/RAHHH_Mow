@@ -1,7 +1,7 @@
 const { sendBotMessage } = require("../lib/chat");
 const spotify = require("../lib/spotify");
 const spotifyAuth = require("../lib/spotifyAuth");
-const queueStore = require("../lib/persistence/songQueue");
+const { findRequesterForTrack } = require("../lib/upcomingSongs");
 const overrides = require("../lib/messageOverrides");
 
 /* ------------------------------------------------------------------ */
@@ -62,18 +62,14 @@ module.exports = {
     const title = playback.item.name;
     const artist = (playback.item.artists || []).map((a) => a.name).join(", ");
 
-    // Most recent match wins, in case the same track was requested more
-    // than once this session.
-    const requester = [...queueStore.queue]
-      .reverse()
-      .find((r) => r.status === "sent" && r.trackUri === playback.item.uri);
+    const requester = findRequesterForTrack(playback.item.uri);
 
     if (requester) {
       await sendBotMessage(
         overrides.getMessage("song", "currentRequested", MESSAGES.currentRequested.default, {
           title,
           artist,
-          user: requester.requestedBy,
+          user: requester,
         }),
         ctx.messageId
       );

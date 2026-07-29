@@ -79,11 +79,14 @@ const OVERLAY_HTML = `<!doctype html>
 
   function playNext() {
     if (playing) return;
-    const file = queue.shift();
-    if (!file) return;
+    const item = queue.shift();
+    if (!item) return;
 
     playing = true;
-    const audio = new Audio("/files/" + encodeURIComponent(file));
+    const audio = new Audio("/files/" + encodeURIComponent(item.file));
+    // volume arrives as 0-100 from the redeem/command's own setting; Audio
+    // wants 0-1. Clamped here too in case something odd ends up on the wire.
+    audio.volume = Math.min(100, Math.max(0, item.volume ?? 100)) / 100;
     const advance = () => { playing = false; playNext(); };
     audio.addEventListener("ended", advance);
     audio.addEventListener("error", advance);
@@ -95,8 +98,7 @@ const OVERLAY_HTML = `<!doctype html>
 
   const es = new EventSource("/events");
   es.onmessage = (e) => {
-    const { file } = JSON.parse(e.data);
-    queue.push(file);
+    queue.push(JSON.parse(e.data));
     playNext();
   };
 </script>
@@ -225,11 +227,13 @@ const NOWPLAYING_HTML = `<!doctype html>
 </body>
 </html>`;
 
-// Pushes a "play this file" event to every connected SFX overlay. Returns
-// how many overlays actually received it, mainly so callers can notice if
-// nobody's browser source is even open yet.
-function playFile(filename) {
-  const payload = JSON.stringify({ file: filename });
+// Pushes a "play this file" event to every connected SFX overlay. `volume`
+// is 0-100 (a redeem/command's own sfxVolume setting), defaulting to full
+// volume for any caller that doesn't pass one. Returns how many overlays
+// actually received it, mainly so callers can notice if nobody's browser
+// source is even open yet.
+function playFile(filename, volume = 100) {
+  const payload = JSON.stringify({ file: filename, volume });
   for (const res of clients) {
     res.write(`data: ${payload}\n\n`);
   }

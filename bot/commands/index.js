@@ -30,6 +30,7 @@ const commands = [
   require("./song"),
   require("./queue"),
   require("./next"),
+  require("./add"),
   require("./customCommands"),
 ];
 

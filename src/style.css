@@ -43,6 +43,20 @@ input, textarea, select {
     -webkit-user-select: text;
 }
 
+/* Hides the browser's native number-field spin buttons everywhere — every
+   other input in this app is a plain box with no visible chrome, and the
+   default up/down arrows don't match that. Typing (or the arrow keys) still
+   works fine, this is purely visual. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 .app {
     display: flex;
     flex: 1;
@@ -165,6 +179,7 @@ textarea:focus {
     flex-direction: column;
     padding: 40px;
     min-height: 0;
+    min-width: 0;
     position: relative;
 }
 
@@ -231,27 +246,15 @@ textarea::-webkit-scrollbar-thumb:active {
     cursor: grabbing;
 }
 
-#settingsPage {
-    max-width: 1200px;
-    width: 100%;
-    align-self: center;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: 40px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    scrollbar-width: none;
-}
-
-/* #songsPage/#snacksPage do NOT scroll as one long page like #settingsPage
-   — their two halves (Settings / Queue) are separately-scrolling slide
-   panels within a fixed-height viewport, so the page itself must stay a
-   bounded flex column instead of growing to fit both stacked. See
-   .sr-slider below — shared by both the Song Requests and Daily Check-In
-   pages, same layout system for both. */
+/* #songsPage/#snacksPage/#settingsPage do NOT scroll as one long page —
+   their two halves (Settings / Queue, or Settings / Logs) are
+   separately-scrolling slide panels within a fixed-height viewport, so the
+   page itself must stay a bounded flex column instead of growing to fit
+   both stacked. See .sr-slider below — shared by the Song Requests, Daily
+   Check-In, and Settings+Logs pages, same layout system for all three. */
 #songsPage,
-#snacksPage {
+#snacksPage,
+#settingsPage {
     max-width: 1200px;
     width: 100%;
     align-self: center;
@@ -365,7 +368,8 @@ textarea::-webkit-scrollbar-thumb:active {
     }
 
     #songsPage,
-    #snacksPage {
+    #snacksPage,
+    #settingsPage {
         overflow-y: auto;
         overflow-x: hidden;
         scrollbar-width: none;
@@ -391,6 +395,17 @@ textarea::-webkit-scrollbar-thumb:active {
         width: auto;
         overflow-y: visible;
         padding-right: 0;
+    }
+
+    /* .logs-container's flex:1 (see its own rule) assumes a bounded flex
+       column, true for the narrow/slide layout above but not here — .sr-
+       queue-col is a grid item sized to its own content height in this
+       view, so flex:1 has nothing to grow into and the log feed collapses
+       to a sliver. A fixed height sidesteps that instead of fighting it. */
+    #settingsPage .sr-queue-col .logs-container {
+        flex: none;
+        height: 480px;
+        overflow-y: scroll;
     }
 }
 
@@ -809,6 +824,7 @@ textarea::-webkit-scrollbar-thumb:active {
 
 .settings-token-wrap input {
     flex: 1;
+    min-width: 0;
 }
 
 .toggle-vis {
@@ -847,6 +863,22 @@ textarea::-webkit-scrollbar-thumb:active {
     background: rgba(var(--accent-rgb), 0.28);
 }
 
+/* Canvas bleeds past the button's own edges so the specular rim stroke
+   isn't clipped to the button's box — see initSpecularBorder in main.js. */
+#toggleBotGlow {
+    position: relative;
+    display: inline-grid;
+}
+
+#toggleBotSpecular {
+    /* left/top/width/height are set directly in JS (initSpecularBorder's
+       resize()), driven by the same opts.pad the drawing code uses — no
+       hardcoded value here to fall out of sync with it. */
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+}
+
 .power-btn {
     padding: 16px 34px;
     border-radius: 999px;
@@ -857,6 +889,8 @@ textarea::-webkit-scrollbar-thumb:active {
     cursor: pointer;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 2;
 }
 
 .dashboard {
@@ -864,7 +898,7 @@ textarea::-webkit-scrollbar-thumb:active {
     justify-content: center;
     align-items: flex-start;
     align-self: center;
-    padding-top: 40px;
+    padding: 40px 24px 0;
     flex-grow: 1;
     overflow-y: auto;
     overflow-x: hidden;
@@ -2107,6 +2141,80 @@ textarea::-webkit-scrollbar-thumb:active {
 #cmdCooldownSeconds,
 #redeemCooldownSeconds {
     width: 110px;
+}
+
+/* Number box drives, and reflects, the same value as the elastic slider next
+   to it — same ID-vs-".settings-field input { width: 100% }" specificity
+   fight as the cooldown seconds field above, same fix (an ID rule). */
+.sfx-volume-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Custom track-and-fill instead of a native <input type="range"> — no
+   thumb/orb at all, so there's nothing that can visually mismatch the fill
+   edge. Dragging anywhere on the track sets the value (see
+   initElasticVolumeSlider in main.js); dragging past either end stretches
+   this wrapper and squishes the icon on that side, springing back on
+   release — same interaction language as borderGlow.js's cursor tracking,
+   just hand-rolled instead of pulled in as a dependency (this app has no
+   frontend build step, so no React/animation library). */
+.sfx-slider-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sfx-volume-icon {
+    display: flex;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--accent-light);
+    opacity: 0.75;
+}
+
+.sfx-volume-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.sfx-slider-track {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.12);
+    cursor: grab;
+    touch-action: none;
+}
+
+.sfx-slider-track:active {
+    cursor: grabbing;
+}
+
+.sfx-slider-range {
+    position: absolute;
+    inset: 0;
+    width: 0%;
+    border-radius: inherit;
+    background: var(--accent);
+}
+
+#cmdSfxVolume,
+#redeemSfxVolume {
+    width: 70px;
+    flex: none;
+}
+
+.sfx-volume-pct {
+    color: var(--accent-pale);
+    opacity: 0.7;
+    font-size: 13px;
 }
 
 .cmd-replies-list {

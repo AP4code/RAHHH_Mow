@@ -31,4 +31,15 @@ async function getUpcoming() {
   return [...pending, ...spotifyQueue];
 }
 
-module.exports = { getUpcoming };
+// Shared by commands/song.js and commands/add.js — a track stays tagged
+// "sent" in this app's own queue history after
+// lib/songQueueScheduler.js promotes it, so a URI match means the currently
+// playing track was requested through the bot rather than played manually.
+// Most recent match wins, in case the same track was requested more than
+// once this session.
+function findRequesterForTrack(trackUri) {
+  const match = [...queueStore.queue].reverse().find((r) => r.status === "sent" && r.trackUri === trackUri);
+  return match ? match.requestedBy : null;
+}
+
+module.exports = { getUpcoming, findRequesterForTrack };

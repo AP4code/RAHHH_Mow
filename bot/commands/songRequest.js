@@ -12,7 +12,7 @@ const MESSAGES = {
   },
   failed: {
     default: "@{login} {reason}",
-    description: "Sent when a chat song request is rejected.",
+    description: "Sent when a song request is rejected, from chat or a channel-points redemption.",
     placeholders: ["login", "reason"],
   },
 };
@@ -91,3 +91,5 @@ module.exports = {
     );
   },
 };
+
+module.exports.MESSAGES = MESSAGES;

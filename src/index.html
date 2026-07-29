@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="titlebar.css" />
   <link rel="stylesheet" href="sideRays.css" />
-  <link rel="stylesheet" href="borderGlow.css" />
 </head>
 
 <body>
@@ -43,10 +42,9 @@
         <button class="nav-btn" id="listsNav">Lists</button>
         <button class="nav-btn" id="clipsNav">Clips</button>
         <button class="nav-btn" id="snacksNav">Daily Check In</button>
+        <button class="nav-btn" id="songsNav">Song Requests</button>
         <button class="nav-btn" id="commandsNav">Commands</button>
         <button class="nav-btn" id="redeemsNav">Redeems</button>
-        <button class="nav-btn" id="songsNav">Song Requests</button>
-        <button class="nav-btn" id="logsNav">Logs</button>
         <button class="nav-btn" id="settingsNav">Settings</button>
       </nav>
     </aside>
@@ -66,6 +64,7 @@
           </div>
 
           <div id="toggleBotGlow">
+            <canvas id="toggleBotSpecular" aria-hidden="true"></canvas>
             <button id="toggleBot" class="power-btn">
               ⏻ Start Bot
             </button>
@@ -116,38 +115,17 @@
         <button id="saveLists" class="primary">Save Lists</button>
       </div>
 
-      <!-- LOGS PAGE -->
-      <div id="logsPage" style="display:none;">
-
-          <h2>Logs</h2>
-
-          <div class="logs-controls">
-            <label class="auto-scroll">
-              <input type="checkbox" id="autoScroll" checked>
-              Auto scroll
-            </label>
-
-            <div class="filters">
-              <button class="filter-btn active" data-filter="all">All</button>
-              <button class="filter-btn" data-filter="info">Info</button>
-              <button class="filter-btn" data-filter="error">Error</button>
-              <button class="filter-btn" data-filter="bot">Bot</button>
-            </div>
-
-            <div class="log-actions">
-              <button id="clearLogs" class="logs-clear-btn">Clear</button>
-              <button id="copyLogs" class="logs-copy-btn">Copy</button>
-            </div>
+        <!-- SETTINGS PAGE (merged with Logs — same tab-slide layout as Song
+             Requests / Daily Check-In, see .sr-page-tabs in style.css) -->
+        <div id="settingsPage" style="display:none;">
+          <div class="sr-page-tabs">
+            <button type="button" class="sr-page-tab active" id="settingsTabSettings">Settings</button>
+            <button type="button" class="sr-page-tab" id="settingsTabLogs">Logs</button>
           </div>
 
-          <div id="logs" class="logs-container"></div>
-
-        </div>
-
-        <!-- SETTINGS PAGE -->
-        <div id="settingsPage" style="display:none;">
-          <h2>Bot Settings</h2>
-
+          <div class="sr-slider-viewport">
+            <div class="sr-slider" id="settingsSlider">
+            <div class="sr-settings-col">
           <div class="settings-grid">
           <div class="settings-section settings-section--wide">
             <p class="settings-section-label">Preferences</p>
@@ -342,6 +320,32 @@
           </div>
 
           <button id="saveSettings" class="primary">Save &amp; Restart Bot</button>
+            </div>
+
+            <div class="sr-queue-col">
+              <div class="logs-controls">
+                <label class="auto-scroll">
+                  <input type="checkbox" id="autoScroll" checked>
+                  Auto scroll
+                </label>
+
+                <div class="filters">
+                  <button class="filter-btn active" data-filter="all">All</button>
+                  <button class="filter-btn" data-filter="info">Info</button>
+                  <button class="filter-btn" data-filter="error">Error</button>
+                  <button class="filter-btn" data-filter="bot">Bot</button>
+                </div>
+
+                <div class="log-actions">
+                  <button id="clearLogs" class="logs-clear-btn">Clear</button>
+                  <button id="copyLogs" class="logs-copy-btn">Copy</button>
+                </div>
+              </div>
+
+              <div id="logs" class="logs-container"></div>
+            </div>
+            </div>
+          </div>
         </div>
 
       <!-- CLIPS PAGE -->
@@ -511,8 +515,9 @@
                   <span class="field-hint">Default count when nobody types a number, e.g. !queue 6</span>
                 </div>
                 <div class="settings-field">
-                  <label for="srPlaylistId">Also add to Spotify playlist (optional)</label>
+                  <label for="srPlaylistId">Spotify playlist ID (optional)</label>
                   <input id="srPlaylistId" placeholder="Spotify playlist ID">
+                  <span class="field-hint">Mods/broadcaster can add whatever's currently playing to this playlist with !add.</span>
                 </div>
               </div>
               <span class="field-hint">Requests stay removable with !remove until they're pushed into Spotify's real queue. It has no way to un-queue a track once that happens.</span>
@@ -696,6 +701,24 @@
               </div>
               <span class="field-hint">Pick an mp3/wav/ogg from anywhere, a copy is saved into the app's sfx folder when you save this command.</span>
             </div>
+            <div class="settings-field">
+              <label for="cmdSfxVolume">Volume</label>
+              <div class="sfx-volume-row">
+                <div class="sfx-slider-wrapper" id="cmdSfxSliderWrapper">
+                  <span class="sfx-volume-icon" id="cmdSfxIconLow">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5z"/><path d="M16.5 12c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02z"/></svg>
+                  </span>
+                  <div class="sfx-slider-track" id="cmdSfxSliderTrack">
+                    <div class="sfx-slider-range" id="cmdSfxSliderRange"></div>
+                  </div>
+                  <span class="sfx-volume-icon" id="cmdSfxIconHigh">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16.5 12c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                  </span>
+                </div>
+                <input type="number" id="cmdSfxVolume" min="0" max="100" value="100">
+                <span class="sfx-volume-pct">%</span>
+              </div>
+            </div>
           </div>
 
           <div class="settings-field">
@@ -749,7 +772,7 @@
 
           <div class="settings-field">
             <label for="redeemTitle">Title</label>
-            <input id="redeemTitle" placeholder="Pole Roll" autocomplete="off">
+            <input id="redeemTitle" placeholder="Sunglasses" autocomplete="off">
           </div>
 
           <div class="settings-field">
@@ -852,6 +875,24 @@
               </div>
               <span class="field-hint">Pick an mp3/wav/ogg from anywhere, a copy is saved into the app's sfx folder when you save this redeem.</span>
             </div>
+            <div class="settings-field">
+              <label for="redeemSfxVolume">Volume</label>
+              <div class="sfx-volume-row">
+                <div class="sfx-slider-wrapper" id="redeemSfxSliderWrapper">
+                  <span class="sfx-volume-icon" id="redeemSfxIconLow">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5z"/><path d="M16.5 12c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02z"/></svg>
+                  </span>
+                  <div class="sfx-slider-track" id="redeemSfxSliderTrack">
+                    <div class="sfx-slider-range" id="redeemSfxSliderRange"></div>
+                  </div>
+                  <span class="sfx-volume-icon" id="redeemSfxIconHigh">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16.5 12c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                  </span>
+                </div>
+                <input type="number" id="redeemSfxVolume" min="0" max="100" value="100">
+                <span class="sfx-volume-pct">%</span>
+              </div>
+            </div>
           </div>
 
           <div class="settings-field">
@@ -910,7 +951,6 @@
 
   <script src="titlebar.js"></script>
   <script src="sideRays.js"></script>
-  <script src="borderGlow.js"></script>
   <script src="main.js"></script>
 </body>
 

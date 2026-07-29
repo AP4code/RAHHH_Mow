@@ -75,11 +75,6 @@ async function tick() {
 
   try {
     await spotify.addToQueue(next.trackUri);
-    if (settingsStore.settings.addToPlaylistId) {
-      spotify.addToPlaylist(settingsStore.settings.addToPlaylistId, next.trackUri).catch((e) => {
-        console.warn("[SONGREQ] Playlist add failed (non-fatal):", e.response?.data || e.message);
-      });
-    }
     next.status = "sent";
     queueStore.save();
     console.log(`[SONGREQ] Promoted "${next.title}" (requested by ${next.requestedBy}) into Spotify's queue`);

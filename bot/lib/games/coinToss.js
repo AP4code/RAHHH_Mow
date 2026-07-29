@@ -13,9 +13,11 @@ const overrides = require("../messageOverrides");
 /* ------------------------------------------------------------------ */
 
 const COIN_USER_COOLDOWN_MS = 30 * 60 * 1000; // how long a winner/loser sits out before being eligible again
-const COIN_EVENT_INTERVAL_MS = 10 * 60 * 1000; // how often we try to start a new challenge
+const COIN_EVENT_INTERVAL_MS = 20 * 60 * 1000; // how often we try to start a new challenge
+const COIN_MIN_STREAM_UPTIME_MS = 40 * 60 * 1000; // don't start challenges until the stream's been live this long
 const COIN_RESPONSE_WINDOW_MS = 30 * 1000; // time the challenged user has to answer
 const COIN_REVEAL_DELAY_MS = 2000; // suspense before revealing the flip
+const COIN_GIVEPOINTS_DELAY_MS = 3000; // gap after the win message before !givepoints, so they don't collide
 const RECENT_CHAT_WINDOW_MS = 15 * 1000; // must have chatted this recently to be eligible
 const COIN_WIN_POINTS = 500;
 
@@ -120,6 +122,9 @@ async function startEvent() {
   if (!enabled || activeUser) return;
   if (sessionStore.session.live === false) return; // no chat to challenge if the stream's down
 
+  const liveSince = sessionStore.session.liveSince;
+  if (!liveSince || Date.now() - liveSince < COIN_MIN_STREAM_UPTIME_MS) return; // too early into the stream
+
   const login = pickEligibleUser();
   if (!login) {
     console.log("[COIN] No eligible users");
@@ -164,7 +169,7 @@ async function handleChoice(login, rawChoice) {
       );
       // Talks directly to the points/loyalty bot in chat — bypass sendBotMessage
       // so this doesn't get echoed back by !repeat.
-      setTimeout(() => sendChat(`!givepoints ${login} ${COIN_WIN_POINTS}`), 1000);
+      setTimeout(() => sendChat(`!givepoints ${login} ${COIN_WIN_POINTS}`), COIN_GIVEPOINTS_DELAY_MS);
     } else {
       await sendBotMessage(
         overrides.getMessage("coin", "lose", MESSAGES.lose.default, { result: result.toUpperCase(), login })

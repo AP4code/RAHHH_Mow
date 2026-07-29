@@ -90,7 +90,7 @@ async function runAction(cfg, event) {
   }
 
   if (cfg.action === "sfx") {
-    if (cfg.sfxFile) sfxServer.playFile(cfg.sfxFile);
+    if (cfg.sfxFile) sfxServer.playFile(cfg.sfxFile, cfg.sfxVolume ?? 100);
     return;
   }
 

@@ -4,6 +4,11 @@ const { updateRedemptionStatus } = require("../lib/twitchRewards");
 const { sendBotMessage } = require("../lib/chat");
 const { getSubTier } = require("../lib/subscriptions");
 const state = require("../lib/state");
+const overrides = require("../lib/messageOverrides");
+// Reuses commands/songRequest.js's "failed" catalog entry — a rejection is
+// the same message whether it came from chat or a channel-points
+// redemption, so it's one editable template, not two.
+const { MESSAGES } = require("../commands/songRequest");
 
 /* ------------------------------------------------------------------ */
 /* Channel-point song requests — deliberately independent from          */
@@ -54,7 +59,12 @@ async function handleSongRequestRedemption(event) {
     }
 
     console.log(`[SONGREQ] Redemption from ${event.user_login} rejected — ${result.reason}`);
-    await sendBotMessage(`@${event.user_login} ${result.reason}`);
+    await sendBotMessage(
+      overrides.getMessage("songRequest", "failed", MESSAGES.failed.default, {
+        login: event.user_login,
+        reason: result.reason,
+      })
+    );
   }
 }
 

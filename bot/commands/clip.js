@@ -30,6 +30,11 @@ const MESSAGES = {
     description: "Sent once the clip has actually been created.",
     placeholders: ["login", "url"],
   },
+  failed: {
+    default: "@{login} couldn't create clip Sadge ",
+    description: "Sent when Twitch fails to create the clip.",
+    placeholders: ["login"],
+  },
 };
 
 overrides.registerDefaults("clip", MESSAGES);
@@ -68,7 +73,7 @@ module.exports = {
 
     if (!clipId) {
       lastClipAt = 0; // a failed attempt shouldn't burn the cooldown
-      await sendBotMessage(`@${login} couldn't create clip Sadge `, messageId);
+      await sendBotMessage(overrides.getMessage("clip", "failed", MESSAGES.failed.default, { login }), messageId);
       return;
     }
 

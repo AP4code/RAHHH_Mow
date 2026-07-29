@@ -148,6 +148,6 @@ module.exports = {
 
     // Sfx is an add-on, not a command type — a Reply or Counter command can
     // also trigger a sound on top of its normal action.
-    if (cmd.sfxFile) sfxServer.playFile(cmd.sfxFile);
+    if (cmd.sfxFile) sfxServer.playFile(cmd.sfxFile, cmd.sfxVolume ?? 100);
   },
 };

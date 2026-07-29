@@ -7,6 +7,18 @@ function escapeHtml(str) {
   }[c]));
 }
 
+// Declared this early (rather than where each is actually initialized,
+// further down) so applyAccentTheme() below can safely check them —
+// restoring a saved accent color on startup happens before the power
+// button and its glow exist yet, and referencing a `let`/`const` before its
+// normal declaration point throws even under a `typeof` guard. Predeclaring
+// as `let ... = null/false` here sidesteps that entirely: by the time
+// applyAccentTheme's early bootstrap call runs, these already safely read
+// as null/false instead of being in the temporal dead zone.
+let powerGlow = null;
+let botRunning = false;
+let botStarting = false;
+
 /* ---------- ACCENT COLOR THEME ---------- */
 // The whole UI's accent palette is driven by CSS custom properties on :root
 // (see the :root block at the top of style.css for the default values and
@@ -168,6 +180,13 @@ function applyAccentTheme(hex) {
   root.setProperty("--accent-glow", glow.hex);
 
   window.SideRays?.instance?.setOptions({ rayColor1: light.hex, rayColor2: darker.hex });
+
+  // Keeps the power button's specular glow in sync with a live accent
+  // change while the bot's stopped (the running-state red doesn't care
+  // about this). No-op during the very first startup call, before the
+  // button/glow exist yet — the initial setPowerGlowTheme(false) call
+  // right after they're created picks up the restored color anyway.
+  if (powerGlow) setPowerGlowTheme(botRunning);
 
   updateAccentUI(hex);
 }
@@ -418,24 +437,187 @@ const navButtons = document.querySelectorAll(".nav-btn");
 const settingsNav = document.getElementById("settingsNav");
 const settingsPage = document.getElementById("settingsPage");
 
+/* Specular border for the Start/Stop Bot button — a hand-rolled vanilla
+   Canvas2D rim light: a dark stroke hugging the button's rounded rect, plus
+   a bright highlight that eases toward the pointer's angle and fades with
+   distance, mirrored to the opposite edge too (both sides facing toward and
+   away from the "light" catch a streak, same as a real specular highlight
+   on a rounded surface). No WebGL/React — this app has no frontend build
+   step, so nothing here needs bundling, same reasoning as the borderGlow.js
+   cursor-tracking effect this replaces used to lean on (deleted, this was
+   its only use). The RAF loop only runs while the glow is actually visible
+   (settling or the pointer's within proximity range), not perpetually. */
+function initSpecularBorder(el, canvas, options) {
+  const opts = Object.assign({
+    pad: 12,
+    radius: 999,
+    lineColor: "255, 255, 255",
+    baseColor: "60, 58, 70",
+    intensity: 1,
+    shineSizeDeg: 10,
+    shineFadeDeg: 40,
+    thickness: 2,
+    baseWidth: 1.5,
+    proximity: 220,
+    // Lower = slower/dreamier easing for both the angle chasing the
+    // pointer and the brightness fading in/out. 7/8 (the shader's own
+    // rates) read as snappy on a small button like this one.
+    angleEase: 3.5,
+    brightEase: 4.5,
+  }, options || {});
+
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+
+  let w = 0, h = 0;
+  function resize() {
+    const rect = el.getBoundingClientRect();
+    w = rect.width;
+    h = rect.height;
+    canvas.width = (w + opts.pad * 2) * dpr;
+    canvas.height = (h + opts.pad * 2) * dpr;
+    canvas.style.width = `${w + opts.pad * 2}px`;
+    canvas.style.height = `${h + opts.pad * 2}px`;
+    // Position derives from the same opts.pad the drawing code uses, rather
+    // than a separately hardcoded CSS inset that has to be kept in sync by
+    // hand — that mismatch is exactly what made the glow look offset from
+    // the button after pad was tuned down without updating the CSS too.
+    canvas.style.left = `${-opts.pad}px`;
+    canvas.style.top = `${-opts.pad}px`;
+    draw();
+  }
+  const ro = new ResizeObserver(resize);
+  ro.observe(el);
+
+  function roundRectPath() {
+    const x = opts.pad, y = opts.pad;
+    const r = Math.min(opts.radius, Math.min(w, h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  let angle = 0;
+  let bright = 0;
+  let pointerAngle = null;
+  let proximityT = 0;
+
+  function draw() {
+    if (!w || !h) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w + opts.pad * 2, h + opts.pad * 2);
+    if (bright <= 0.002) return;
+
+    roundRectPath();
+    ctx.strokeStyle = `rgba(${opts.baseColor}, ${0.45 * bright})`;
+    ctx.lineWidth = opts.baseWidth;
+    ctx.stroke();
+
+    const cx = opts.pad + w / 2, cy = opts.pad + h / 2;
+    const shineSize = (opts.shineSizeDeg * Math.PI) / 180;
+    const shineFade = (opts.shineFadeDeg * Math.PI) / 180;
+    const edge = Math.min(0.499, (shineSize + shineFade) / (2 * Math.PI));
+    const core = Math.min(edge, shineSize / (2 * Math.PI));
+
+    // Symmetric double band: bright near angle 0 (facing the light) AND
+    // near 0.5 (the opposite edge), soft-fading out between the two.
+    const grad = ctx.createConicGradient(angle - Math.PI / 2, cx, cy);
+    const stops = [
+      [0, 1], [core, 0.7], [edge, 0],
+      [0.5 - edge, 0], [0.5 - core, 0.7], [0.5, 1],
+      [0.5 + core, 0.7], [0.5 + edge, 0],
+      [1 - edge, 0], [1 - core, 0.7], [1, 1],
+    ];
+    for (const [pos, a] of stops) {
+      grad.addColorStop(
+        Math.max(0, Math.min(1, pos)),
+        `rgba(${opts.lineColor}, ${a * opts.intensity * bright})`
+      );
+    }
+
+    roundRectPath();
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = opts.thickness;
+    ctx.stroke();
+  }
+
+  let raf = null;
+  let last = performance.now();
+
+  function tick(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+
+    if (pointerAngle != null) {
+      const diff = ((pointerAngle - angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      angle += diff * (1 - Math.exp(-dt * opts.angleEase));
+    }
+    bright += (proximityT - bright) * (1 - Math.exp(-dt * opts.brightEase));
+
+    draw();
+
+    if (bright > 0.002 || proximityT > 0.002) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      raf = null;
+    }
+  }
+
+  function ensureRunning() {
+    if (raf == null) {
+      last = performance.now();
+      raf = requestAnimationFrame(tick);
+    }
+  }
+
+  function onPointerMove(e) {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+    const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+    const dist = Math.hypot(dx, dy);
+    pointerAngle = Math.atan2(cy - e.clientY, e.clientX - cx);
+    const t = Math.max(0, 1 - dist / opts.proximity);
+    proximityT = t * t * (3 - 2 * t);
+    ensureRunning();
+  }
+  window.addEventListener("pointermove", onPointerMove);
+
+  resize();
+
+  return {
+    setLineColor(rgb) { opts.lineColor = rgb; },
+    destroy() {
+      if (raf != null) cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("pointermove", onPointerMove);
+    },
+  };
+}
+
 const toggleBotGlow = document.getElementById("toggleBotGlow");
-const powerGlow = BorderGlow.init(toggleBotGlow, {
-  wrap: true,
-  borderRadius: 999,
-  glowRadius: 22,
-  edgeSensitivity: 25,
-  coneSpread: 30,
+const toggleBotSpecularCanvas = document.getElementById("toggleBotSpecular");
+powerGlow = initSpecularBorder(toggleBotGlow, toggleBotSpecularCanvas, {
+  radius: 999,
+  proximity: 220,
 });
 
-// Subtle neutral gray/white glow while stopped (no purple); dim translucent
-// red once the bot is actually running.
+// Matches the button's own actual colors rather than a separately guessed
+// palette: the live theme accent while stopped (same "139, 92, 246"-style
+// --accent-rgb the button's own background/border already use, read fresh
+// each call so a live accent-color change picks it up), the same red
+// ".power-btn.running" uses once the bot is actually running.
 function setPowerGlowTheme(running) {
   if (running) {
-    powerGlow.setGlowColor("0 70% 55%", 0.55);
-    powerGlow.setColors(["#b91c1c", "#991b1b", "#7f1d1d"]);
+    powerGlow.setLineColor("239, 68, 68");
   } else {
-    powerGlow.setGlowColor("0 0% 85%", 0.4);
-    powerGlow.setColors(["#9ca3af", "#d1d5db", "#e5e7eb"]);
+    const accentRgb = getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim();
+    powerGlow.setLineColor(accentRgb || "139, 92, 246");
   }
 }
 setPowerGlowTheme(false);
@@ -445,7 +627,6 @@ function setActive(btn) {
   btn.classList.add("active");
 }
 
-const logsPage = document.getElementById("logsPage");
 const clipsPage = document.getElementById("clipsPage");
 const snacksPage = document.getElementById("snacksPage");
 const commandsPage = document.getElementById("commandsPage");
@@ -460,7 +641,6 @@ const pages = [
   commandsPage,
   redeemsPage,
   songsPage,
-  logsPage,
   settingsPage,
 ];
 
@@ -663,14 +843,33 @@ listen("bot-log", event => {
   }
 });
 
+// Settings/Logs tab-slide — same mechanism as Song Requests' settings/queue
+// tabs and Daily Check-In's settings/points tabs (see .sr-page-tabs in
+// style.css), merged here so Logs no longer needs its own sidebar entry.
+const settingsTabSettings = document.getElementById("settingsTabSettings");
+const settingsTabLogs = document.getElementById("settingsTabLogs");
+const settingsSlider = document.getElementById("settingsSlider");
+
+function showSettingsTab(tab) {
+  const showLogs = tab === "logs";
+  settingsSlider.classList.toggle("show-queue", showLogs);
+  settingsTabSettings.classList.toggle("active", !showLogs);
+  settingsTabLogs.classList.toggle("active", showLogs);
+
+  if (showLogs && autoScrollBox.checked) {
+    setTimeout(() => { logContainer.scrollTop = logContainer.scrollHeight; }, 100);
+  }
+}
+
+settingsTabSettings.onclick = () => showSettingsTab("settings");
+settingsTabLogs.onclick = () => showSettingsTab("logs");
+
 function showPage(pageToShow) {
   pages.forEach(p => p.style.display = "none");
   pageToShow.style.display = "";
 }
 
 const toggleBtn = document.getElementById("toggleBot");
-let botRunning = false;
-let botStarting = false;
 toggleBtn.onclick = async () => {
   try {
     if (!botRunning) {
@@ -729,20 +928,6 @@ listsNav.onclick = async () => {
   }
 };
 
-const logsNav = document.getElementById("logsNav");
-
-logsNav.onclick = () => {
-  setActive(logsNav);
-  showPage(logsPage);
-
-  setTimeout(() => {
-    const logBox = document.querySelector(".logs-container");
-
-    if (autoScrollBox.checked && logBox) {
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-  }, 100);
-};
 /* ---------- SAVE LISTS ---------- */
 
 document.getElementById("saveLists").onclick = async () => {
@@ -1523,6 +1708,7 @@ const BUILTIN_COMMANDS = [
   { key: "song", trigger: "!song", description: "Shows the currently playing song, and who requested it if it was a request." },
   { key: "queue", trigger: "!queue", description: "Shows upcoming songs. !queue N shows N instead of the configured default." },
   { key: "next", trigger: "!next", description: "Shows the very next upcoming song." },
+  { key: "add", trigger: "!add", description: "Mod/broadcaster only. Adds whatever's currently playing on Spotify to the configured playlist." },
 ];
 
 const PERMISSION_LABELS = {
@@ -1890,6 +2076,7 @@ const cmdCounterTemplate = document.getElementById("cmdCounterTemplate");
 const cmdSfxEnabled = document.getElementById("cmdSfxEnabled");
 const cmdSfxFields = document.getElementById("cmdSfxFields");
 const cmdSfxFile = document.getElementById("cmdSfxFile");
+const cmdSfxVolume = document.getElementById("cmdSfxVolume");
 const cmdPermissionChecks = document.getElementById("cmdPermissionChecks");
 const cmdCooldownMode = document.getElementById("cmdCooldownMode");
 const cmdCooldownSeconds = document.getElementById("cmdCooldownSeconds");
@@ -1960,6 +2147,121 @@ document.getElementById("chooseCmdSfxFile").onclick = () => {
   pickSfxFile(cmdSfxFile, (path) => { pendingCmdSfxPath = path; });
 };
 
+// Elastic volume slider — a hand-rolled vanilla equivalent of a
+// spring-physics slider (no thumb/orb: drag anywhere on the track to set
+// the value; drag past either end and the track/icon on that side stretch
+// and squish, springing back on release). Same "small custom interactive
+// effect built from scratch" precedent as borderGlow.js's cursor tracking —
+// this app has no frontend build step, so no React/animation library.
+const ELASTIC_SLIDER_MAX_OVERFLOW = 30; // px of drag past the track edge before it maxes out
+
+function elasticDecay(value, max) {
+  if (max === 0) return 0;
+  const entry = value / max;
+  const sigmoid = 2 * (1 / (1 + Math.exp(-entry)) - 0.5);
+  return sigmoid * max;
+}
+
+function initElasticVolumeSlider({ wrapper, track, range, iconLow, iconHigh, numberInput }) {
+  let value = Math.min(100, Math.max(0, parseInt(numberInput.value, 10) || 100));
+  let dragging = false;
+
+  function render() {
+    range.style.width = value + "%";
+    numberInput.value = value;
+  }
+
+  function setSpringTransition(on) {
+    const t = on ? "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)" : "";
+    wrapper.style.transition = t;
+    iconLow.style.transition = t;
+    iconHigh.style.transition = t;
+  }
+
+  function applyOverflow(clientX) {
+    const rect = track.getBoundingClientRect();
+    let side = null;
+    let overflowPx = 0;
+    if (clientX < rect.left) {
+      side = "low";
+      overflowPx = rect.left - clientX;
+    } else if (clientX > rect.right) {
+      side = "high";
+      overflowPx = clientX - rect.right;
+    }
+    const eased = elasticDecay(overflowPx, ELASTIC_SLIDER_MAX_OVERFLOW);
+    const shift = side === "low" ? -eased * 0.4 : side === "high" ? eased * 0.4 : 0;
+    wrapper.style.transform = shift ? `translateX(${shift}px)` : "";
+    iconLow.style.transform = side === "low" ? `scale(${1 + (eased / ELASTIC_SLIDER_MAX_OVERFLOW) * 0.5})` : "";
+    iconHigh.style.transform = side === "high" ? `scale(${1 + (eased / ELASTIC_SLIDER_MAX_OVERFLOW) * 0.5})` : "";
+  }
+
+  function resetOverflow() {
+    setSpringTransition(true);
+    wrapper.style.transform = "";
+    iconLow.style.transform = "";
+    iconHigh.style.transform = "";
+    setTimeout(() => setSpringTransition(false), 400);
+  }
+
+  function setValueFromClientX(clientX) {
+    const rect = track.getBoundingClientRect();
+    const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    value = Math.round(pct * 100);
+    render();
+  }
+
+  track.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    track.setPointerCapture(e.pointerId);
+    setSpringTransition(false);
+    setValueFromClientX(e.clientX);
+    applyOverflow(e.clientX);
+  });
+
+  track.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    setValueFromClientX(e.clientX);
+    applyOverflow(e.clientX);
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    resetOverflow();
+  }
+
+  track.addEventListener("pointerup", endDrag);
+  track.addEventListener("pointercancel", endDrag);
+  track.addEventListener("lostpointercapture", endDrag);
+
+  numberInput.addEventListener("input", () => {
+    const v = parseInt(numberInput.value, 10);
+    if (!Number.isFinite(v)) return;
+    value = Math.min(100, Math.max(0, v));
+    numberInput.value = value;
+    range.style.width = value + "%";
+  });
+
+  render();
+
+  return {
+    setValue(v) {
+      value = Math.min(100, Math.max(0, parseInt(v, 10) || 0));
+      render();
+    },
+  };
+}
+
+const cmdVolumeSlider = initElasticVolumeSlider({
+  wrapper: document.getElementById("cmdSfxSliderWrapper"),
+  track: document.getElementById("cmdSfxSliderTrack"),
+  range: document.getElementById("cmdSfxSliderRange"),
+  iconLow: document.getElementById("cmdSfxIconLow"),
+  iconHigh: document.getElementById("cmdSfxIconHigh"),
+  numberInput: cmdSfxVolume,
+});
+
 initCooldownToggle("cmdCooldownToggle", "cmdCooldownMode", "cmdCooldownSeconds");
 
 function refreshCounterNameSuggestions() {
@@ -2012,6 +2314,7 @@ function openCommandForm(existingCmd = null) {
   cmdSfxFields.style.display = cmdSfxEnabled.checked ? "" : "none";
   pendingCmdSfxPath = null;
   cmdSfxFile.value = existingCmd?.sfxFile || "";
+  cmdVolumeSlider.setValue(existingCmd?.sfxVolume ?? 100);
 
   commandFormOverlay.classList.add("open");
   cmdTriggerInput.focus();
@@ -2141,8 +2444,11 @@ document.getElementById("commandFormSave").onclick = async () => {
     cmd.sfxFile = pendingCmdSfxPath
       ? await invoke("import_sfx_file", { sourcePath: pendingCmdSfxPath })
       : cmdSfxFile.value;
+    cmd.sfxVolume = parseInt(cmdSfxVolume.value, 10);
+    if (!Number.isFinite(cmd.sfxVolume)) cmd.sfxVolume = 100;
   } else {
     delete cmd.sfxFile;
+    delete cmd.sfxVolume;
   }
 
   await saveCustomCommands();
@@ -2346,6 +2652,7 @@ const redeemCounterFields = document.getElementById("redeemCounterFields");
 const redeemSnackFields = document.getElementById("redeemSnackFields");
 const redeemSfxFields = document.getElementById("redeemSfxFields");
 const redeemSfxFile = document.getElementById("redeemSfxFile");
+const redeemSfxVolume = document.getElementById("redeemSfxVolume");
 const redeemCounterName = document.getElementById("redeemCounterName");
 const redeemCounterAction = document.getElementById("redeemCounterAction");
 const redeemCounterStepField = document.getElementById("redeemCounterStepField");
@@ -2426,6 +2733,15 @@ document.getElementById("chooseRedeemSfxFile").onclick = () => {
   pickSfxFile(redeemSfxFile, (path) => { pendingRedeemSfxPath = path; });
 };
 
+const redeemVolumeSlider = initElasticVolumeSlider({
+  wrapper: document.getElementById("redeemSfxSliderWrapper"),
+  track: document.getElementById("redeemSfxSliderTrack"),
+  range: document.getElementById("redeemSfxSliderRange"),
+  iconLow: document.getElementById("redeemSfxIconLow"),
+  iconHigh: document.getElementById("redeemSfxIconHigh"),
+  numberInput: redeemSfxVolume,
+});
+
 redeemCounterAction.onchange = () => {
   redeemCounterStepField.style.display = redeemCounterAction.value === "view" ? "none" : "";
 };
@@ -2491,6 +2807,7 @@ function openRedeemForm(reward = null) {
   redeemSfxQueueNote.style.display = currentRedeemAction === "sfx" ? "" : "none";
   pendingRedeemSfxPath = null;
   redeemSfxFile.value = cfg?.sfxFile || "";
+  redeemVolumeSlider.setValue(cfg?.sfxVolume ?? 100);
 
   redeemRepliesList.innerHTML = "";
   const replies = cfg?.replies?.length ? cfg.replies : [""];
@@ -2561,6 +2878,8 @@ async function buildRedeemConfig() {
     cfg.sfxFile = pendingRedeemSfxPath
       ? await invoke("import_sfx_file", { sourcePath: pendingRedeemSfxPath })
       : redeemSfxFile.value;
+    cfg.sfxVolume = parseInt(redeemSfxVolume.value, 10);
+    if (!Number.isFinite(cfg.sfxVolume)) cfg.sfxVolume = 100;
   } else {
     const replies = Array.from(redeemRepliesList.querySelectorAll("input"))
       .map((input) => input.value.trim())

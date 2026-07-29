@@ -40,6 +40,10 @@ async function handle(type, event) {
         }
       }
 
+      // Left alone on a preserved (not reset) session — see the field's own
+      // comment in lib/persistence/session.js.
+      if (!session.liveSince) session.liveSince = Date.now();
+
       session.live = true;
       sessionStore.save();
       return;

@@ -82,7 +82,6 @@ async function sendOfficialShoutout(login, reason = "auto") {
     }
 
     sessionStore.sessionShouted.add(lower);
-    sessionStore.targetCooldownMap.set(lower, Date.now());
     sessionStore.session.lastChannelShoutoutAt = Date.now();
 
     if (allowlist.has(lower)) {

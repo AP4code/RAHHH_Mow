@@ -14,10 +14,15 @@ const session = {
   live: null,
   messageCounts: {},
   lastOfflineAt: 0, // real-world time the stream last went offline; used to gap-check resets
+  // Real-world time the CURRENT stream session actually started — set once
+  // when going online, deliberately left untouched by a "preserved" session
+  // reconnect (a brief crash/restart within SESSION_GAP_RESET_MS) so uptime
+  // math (e.g. games/coinToss.js's 40-minute-in gate) reflects when the
+  // stream really started, not when it happened to reconnect.
+  liveSince: 0,
 };
 
 const sessionShouted = new Set();
-const targetCooldownMap = new Map();
 const messageCounts = new Map();
 
 let _saveScheduled = false;
@@ -77,13 +82,13 @@ function reset(reason = "reset") {
   session.live = null;
   session.messageCounts = {};
   session.lastOfflineAt = lastOfflineAt;
+  session.liveSince = 0;
 
   sessionShouted.clear();
-  targetCooldownMap.clear();
   messageCounts.clear();
 
   save();
   console.log(`Session ${reason}.`);
 }
 
-module.exports = { session, sessionShouted, targetCooldownMap, messageCounts, save, load, reset };
+module.exports = { session, sessionShouted, messageCounts, save, load, reset };
