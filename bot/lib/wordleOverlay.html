@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Twitch Wordle Overlay</title>
+
+  <style>
+    :root {
+      --bg: #0B0A12;
+      --purple: #8B5CF6;
+      --purple-soft: #A78BFA;
+      --text: #EDE9FE;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: transparent;
+    }
+
+    /* ================= CONTAINER ================= */
+
+    /* container-type turns every "Ncqw" unit below into "N% of however wide
+       .container is actually rendered" — continuously, not at fixed
+       breakpoints — so resizing the OBS Browser Source itself (this page's
+       only content) scales the whole board proportionally instead of
+       clipping cells or leaving dead space at other widths. Capped at
+       640px so a source made wider than the original design doesn't just
+       stretch everything oversized. */
+    .container {
+      container-type: inline-size;
+      width: 100%;
+      max-width: 640px;
+      background: linear-gradient(180deg,
+          rgba(20, 16, 40, 0.85),
+          rgba(10, 8, 20, 0.95));
+      backdrop-filter: blur(14px);
+
+      border: 1px solid rgba(139, 92, 246, 0.25);
+
+      box-shadow:
+        0 0 40px rgba(139, 92, 246, 0.15),
+        inset 0 0 20px rgba(139, 92, 246, 0.1);
+
+      border-radius: 16px;
+      color: var(--text);
+      padding: clamp(8px, 3cqw, 14px);
+      position: relative;
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+
+      background: radial-gradient(circle at 20% 10%,
+          rgba(139, 92, 246, 0.25),
+          transparent 60%);
+
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .container::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+
+      background: repeating-radial-gradient(circle at 0 0,
+          rgba(255, 255, 255, 0.02) 0px,
+          rgba(255, 255, 255, 0.02) 1px,
+          transparent 1px,
+          transparent 2px);
+
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* ================= TITLE ================= */
+
+    .title {
+      font-size: clamp(11px, 4cqw, 16px);
+      letter-spacing: clamp(0.5px, 0.4cqw, 2px);
+      text-transform: uppercase;
+
+      color: #c4b5fd;
+
+      text-shadow:
+        0 0 6px rgba(139, 92, 246, 0.8),
+        0 0 12px rgba(139, 92, 246, 0.4);
+    }
+
+    /* ================= TIMER ================= */
+
+    .timer-bar {
+      height: clamp(4px, 1cqw, 6px);
+      background: #1F1B2E;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: clamp(6px, 2cqw, 10px);
+    }
+
+    .timer-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #8B5CF6, #22C55E);
+      transform-origin: left;
+
+      box-shadow:
+        0 0 10px rgba(139, 92, 246, 0.7),
+        inset 0 1px 2px rgba(255, 255, 255, 0.25);
+    }
+
+    .timer-running {
+      animation: timerShrink linear forwards;
+    }
+
+    .paused .timer-fill {
+      animation-play-state: paused;
+    }
+
+    @keyframes timerShrink {
+      from {
+        transform: scaleX(1);
+      }
+
+      to {
+        transform: scaleX(0);
+      }
+    }
+
+    /* ================= GRID ================= */
+
+    .board {
+      display: grid;
+      grid-template-columns: 1fr minmax(70px, 110px);
+      gap: clamp(6px, 2cqw, 10px);
+    }
+
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3px, 1cqw, 5px);
+      max-height: 330px;
+      overflow-y: auto;
+    }
+
+    .grid::-webkit-scrollbar {
+      display: none;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(3px, 1cqw, 5px);
+      animation: pop 0.2s ease, fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0.96);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* ================= CELL ================= */
+
+    .cell {
+      /* Height follows width via aspect-ratio instead of a fixed px value —
+         .row's grid already gives each cell a fluid 1fr width, this just
+         keeps them square at any size instead of a fixed 50px height
+         mismatching a narrower/wider rendered width. */
+      aspect-ratio: 1;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: clamp(12px, 6.5cqw, 22px);
+      font-weight: 800;
+      color: #F5F3FF;
+
+      position: relative;
+      border-radius: 8px;
+
+      background: rgba(20, 20, 30, 0.65);
+      /* darker */
+      border: 1px solid rgba(255, 255, 255, 0.06);
+
+      backdrop-filter: blur(3px);
+      /* reduced */
+
+      box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.06),
+        0 4px 10px rgba(0, 0, 0, 0.5);
+
+      transition: all 0.2s ease;
+    }
+
+    .cell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    /* ================= STATES ================= */
+
+    /* GREEN */
+    .green {
+      border: 1px solid rgba(34, 197, 94, 0.75);
+
+      box-shadow:
+        0 0 14px rgba(34, 197, 94, 0.5),
+        inset 0 0 8px rgba(34, 197, 94, 0.15);
+
+      color: #ecfdf5;
+    }
+
+    .green::after {
+      background: radial-gradient(circle at 50% 30%,
+          rgba(34, 197, 94, 0.12),
+          transparent 65%);
+    }
+
+    /* YELLOW */
+    .yellow {
+      border: 1px solid rgba(234, 179, 8, 0.75);
+
+      box-shadow:
+        0 0 14px rgba(234, 179, 8, 0.45),
+        inset 0 0 8px rgba(234, 179, 8, 0.12);
+
+      color: #fef3c7;
+    }
+
+    .yellow::after {
+      background: radial-gradient(circle at 50% 30%,
+          rgba(234, 179, 8, 0.10),
+          transparent 65%);
+    }
+
+    /* DEAD */
+    .dead {
+      background: rgba(40, 40, 55, 0.4);
+      opacity: 0.7;
+    }
+
+    /* ================= STATE OVERLAY UPGRADE ================= */
+
+    .state-overlay {
+      position: absolute;
+      inset: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 10px;
+
+      background:
+        radial-gradient(circle at center,
+          rgba(139, 92, 246, 0.35),
+          transparent 60%),
+        rgba(0, 0, 0, 0.85);
+
+      backdrop-filter: blur(4px);
+
+      border-radius: 16px;
+
+      opacity: 0;
+      transform: scale(0.96);
+      transition: all 0.25s ease;
+
+      z-index: 10;
+    }
+
+    .state-overlay.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .state-overlay.visible .state-main {
+      animation: popIn 0.35s ease;
+    }
+
+    @keyframes impact {
+      0% {
+        transform: scale(0.85);
+        opacity: 0;
+      }
+
+      60% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .state-timer {
+      margin-top: 4px;
+
+      font-size: clamp(16px, 6cqw, 28px);
+      font-weight: 700;
+
+      color: #a78bfa;
+
+      text-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
+    }
+
+    .state-text {
+      text-align: center;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      gap: 6px;
+      /* controls spacing globally */
+      padding: 10px;
+
+      max-width: 90%;
+      margin: 0 auto;
+    }
+
+    .state-main {
+      font-size: clamp(18px, 7.5cqw, 36px);
+      font-weight: 900;
+      letter-spacing: 1.5px;
+
+      color: #c4b5fd;
+
+      text-shadow:
+        0 0 10px rgba(139, 92, 246, 0.9),
+        0 0 20px rgba(139, 92, 246, 0.5);
+    }
+
+    .state-sub {
+      font-size: clamp(12px, 4cqw, 18px);
+      color: #ddd6fe;
+    }
+
+    .state-accent {
+      font-size: clamp(15px, 5.5cqw, 26px);
+
+      color: #22c55e;
+
+      text-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    }
+
+    /* ================= FLIP ================= */
+
+    .cell.flip {
+      animation: flip 0.6s ease forwards;
+    }
+
+    @keyframes flip {
+      0% {
+        transform: rotateX(0deg);
+      }
+
+      49% {
+        transform: rotateX(90deg);
+        background: rgba(40, 40, 55, 0.5);
+      }
+
+      100% {
+        transform: rotateX(0deg);
+      }
+    }
+
+    /* ================= HISTORY ================= */
+
+    .history {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3px, 1.5cqw, 6px);
+      font-size: clamp(8px, 2.5cqw, 11px);
+      opacity: 0.9;
+    }
+
+    .history-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-word {
+      color: var(--purple-soft);
+      letter-spacing: 1px;
+    }
+
+    .history-dots {
+      display: flex;
+      gap: 2px;
+    }
+
+    .history-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: #3F3F46;
+    }
+
+    .history-dot.green {
+      background: #22C55E;
+    }
+
+    .history-dot.yellow {
+      background: #EAB308;
+    }
+
+    /* ================= DEAD LETTERS ================= */
+
+    .dead-letters {
+      font-size: clamp(10px, 3cqw, 13px);
+      margin-top: clamp(4px, 1.5cqw, 8px);
+    }
+
+    .dead-letters span {
+      margin-right: 6px;
+      color: #9CA3AF;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container" id="app">
+    <div class="state-overlay" id="stateOverlay">
+      <div class="state-text" id="stateText">PAUSED</div>
+    </div>
+    <div class="title">Smoky's English Classes (Wordle)</div>
+
+    <div class="timer-bar">
+      <div class="timer-fill" id="timerFill"></div>
+    </div>
+
+    <div class="board">
+      <div class="grid" id="grid"></div>
+      <div class="history" id="history"></div>
+    </div>
+
+    <div class="dead-letters" id="deadLetters">DEAD LETTERS:</div>
+  </div>
+
+  <script>
+    const app = document.getElementById("app");
+    const grid = document.getElementById("grid");
+    const historyEl = document.getElementById("history");
+    const deadLettersEl = document.getElementById("deadLetters");
+    const timerFill = document.getElementById("timerFill");
+
+    const stateOverlay = document.getElementById("stateOverlay");
+    const stateText = document.getElementById("stateText");
+
+    let isPaused = false;
+    const deadLetters = new Set();
+
+    // Server-Sent Events instead of the standalone version's raw WebSocket —
+    // same one-directional push this app already uses for the SFX and Now
+    // Playing overlays (see lib/sfxServer.js). The overlay only ever
+    // receives pushes here; guesses go through Twitch chat, never back over
+    // this connection.
+    const es = new EventSource("/wordle-events");
+
+    function showWinState(user, wins) {
+      showStateWithCountdown(
+        '<div class="state-main">FOUND THE WORD</div>' +
+        '<div class="state-sub">@' + escapeHtml(user) + '</div>' +
+        '<div class="state-accent">🏆 ' + wins + '</div>',
+        10
+      );
+
+      stateOverlay.classList.add("visible");
+    }
+
+    function showState(text) {
+      clearInterval(countdownInterval);
+      stateText.textContent = text;
+      stateOverlay.classList.add("visible");
+    }
+
+    function hideState() {
+      stateOverlay.classList.remove("visible");
+    }
+
+    function showLoseState(word) {
+      showStateWithCountdown(
+        '<div class="state-main">THE WORD WAS</div>' +
+        '<div class="state-accent">' + escapeHtml(word) + '</div>' +
+        '<div class="state-sub">Try Again</div>',
+        10
+      );
+
+      stateOverlay.classList.add("visible");
+    }
+
+    let countdownInterval = null;
+
+    function showStateWithCountdown(html, seconds) {
+      if (seconds === undefined) seconds = 5;
+      clearInterval(countdownInterval);
+
+      let remaining = seconds;
+
+      stateText.innerHTML = html + '<div class="state-timer">' + remaining + '</div>';
+
+      stateOverlay.classList.add("visible");
+
+      countdownInterval = setInterval(() => {
+        remaining--;
+
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          hideState();
+          return;
+        }
+
+        const timerEl = stateText.querySelector(".state-timer");
+        if (timerEl) timerEl.textContent = remaining;
+      }, 1000);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[c]));
+    }
+
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "state") {
+        hydrateState(data);
+        return;
+      }
+
+      if (data.type === "guess") {
+        renderGuess(data.word, data.result);
+      }
+
+      if (data.type === "win") {
+        stopTimer();
+        showWinState(data.user, data.wins);
+      }
+
+      if (data.type === "timeout") {
+        stopTimer();
+        showLoseState(data.word);
+      }
+
+      if (data.type === "pause") {
+        isPaused = data.value;
+        app.classList.toggle("paused", isPaused);
+
+        if (isPaused) {
+          showState("PAUSED");
+        } else {
+          hideState();
+          if (data.remainingTime !== undefined) {
+            startTimer(Math.ceil(data.remainingTime / 1000));
+          }
+        }
+      }
+
+      if (data.type === "reset") {
+        clearInterval(countdownInterval);
+        hideState();
+        const seconds = data.durationMs ? Math.round(data.durationMs / 1000) : 105;
+        setTimeout(() => startFreshRound(seconds), 180);
+      }
+    };
+
+    // Full re-hydration on connect/reconnect (e.g. an OBS scene switch
+    // reloaded this page mid-round) — replays whatever's already happened
+    // instead of showing a blank board while the game keeps tracking state
+    // correctly server-side regardless of whether anything's connected.
+    function hydrateState(data) {
+      clearInterval(countdownInterval);
+      hideState();
+      grid.innerHTML = "";
+      historyEl.innerHTML = "";
+      deadLetters.clear();
+
+      if (!data.active) {
+        stopTimer();
+        return;
+      }
+
+      (data.guesses || []).forEach((g) => renderGuess(g.word, g.result));
+      (data.deadLetters || []).forEach((l) => deadLetters.add(l));
+      renderDeadLetters();
+
+      isPaused = Boolean(data.paused);
+      app.classList.toggle("paused", isPaused);
+
+      if (isPaused) {
+        showState("PAUSED");
+        stopTimer();
+        return;
+      }
+
+      if (data.roundActive && data.remainingMs > 0) {
+        startTimer(Math.max(1, Math.round(data.remainingMs / 1000)));
+      } else {
+        stopTimer();
+      }
+    }
+
+    function startFreshRound(seconds) {
+      grid.innerHTML = "";
+      historyEl.innerHTML = "";
+      deadLetters.clear();
+      renderDeadLetters();
+      startTimer(seconds);
+    }
+
+    function startTimer(seconds) {
+      timerFill.classList.remove("timer-running");
+      void timerFill.offsetWidth;
+      timerFill.style.animationDuration = seconds + "s";
+      timerFill.classList.add("timer-running");
+    }
+
+    function stopTimer() {
+      timerFill.classList.remove("timer-running");
+    }
+
+    function renderGuess(word, result) {
+      if (isPaused || stateOverlay.classList.contains("visible")) return;
+
+      const row = document.createElement("div");
+      row.className = "row";
+
+      word.split("").forEach((char, i) => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = char;
+        cell.style.animationDelay = (i * 0.15) + "s";
+        row.appendChild(cell);
+      });
+
+      grid.appendChild(row);
+      smoothScrollToBottom(grid);
+
+      [...row.children].forEach((cell, i) => {
+        requestAnimationFrame(() => {
+          cell.classList.add("flip", result[i]);
+          if (result[i] === "dead") deadLetters.add(word[i]);
+        });
+      });
+
+      addToHistory(word, result);
+      renderDeadLetters();
+    }
+
+    function addToHistory(word, result) {
+      const row = document.createElement("div");
+      row.className = "history-row";
+
+      const text = document.createElement("div");
+      text.className = "history-word";
+      text.textContent = word;
+
+      const dots = document.createElement("div");
+      dots.className = "history-dots";
+
+      result.forEach((r) => {
+        const dot = document.createElement("div");
+        dot.className = "history-dot " + r;
+        dots.appendChild(dot);
+      });
+
+      row.appendChild(text);
+      row.appendChild(dots);
+      historyEl.prepend(row);
+
+      if (historyEl.children.length > 15) {
+        historyEl.removeChild(historyEl.lastChild);
+      }
+    }
+
+    function renderDeadLetters() {
+      deadLettersEl.innerHTML = "DEAD LETTERS: ";
+      [...deadLetters].forEach((l) => {
+        const span = document.createElement("span");
+        span.textContent = l;
+        deadLettersEl.appendChild(span);
+      });
+    }
+
+    function smoothScrollToBottom(el, duration) {
+      if (duration === undefined) duration = 250;
+      const start = el.scrollTop;
+      const end = el.scrollHeight - el.clientHeight;
+      const change = end - start;
+      const startTime = performance.now();
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        el.scrollTop = start + change * ease;
+        if (t < 1) requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
+    }
+  </script>
+
+</body>
+
+</html>

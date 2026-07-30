@@ -31,6 +31,12 @@ const commands = [
   require("./queue"),
   require("./next"),
   require("./add"),
+  require("./startWordle"),
+  require("./wordlePause"),
+  require("./wordlePlay"),
+  require("./wordleReset"),
+  require("./wordleTopWins"),
+  require("./wordleHelp"),
   require("./customCommands"),
 ];
 

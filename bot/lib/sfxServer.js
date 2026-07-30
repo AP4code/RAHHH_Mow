@@ -1,24 +1,31 @@
 const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const { SFX_DIR } = require("./paths");
 const { SFX_SERVER_PORT } = require("./env");
 
 /* ------------------------------------------------------------------ */
 /* Tiny local HTTP server whose only job is feeding OBS Browser         */
-/* Sources — the SFX overlay and, since it's already exactly the same    */
-/* local-server-for-OBS infrastructure, the optional Now Playing overlay */
-/* too. Both use the same one-directional server-sent-events approach:  */
-/* the browser source loads its page once and keeps an SSE connection   */
-/* open, and we push it updates as they happen. No websocket lib needed  */
-/* — SSE is all a one-way push like this needs, and Chromium (what OBS's */
-/* browser source runs) supports it natively.                          */
+/* Sources — the SFX overlay, the Now Playing overlay, and the Wordle    */
+/* game board, since they're all exactly the same local-server-for-OBS   */
+/* infrastructure. All three use the same one-directional                */
+/* server-sent-events approach: the browser source loads its page once   */
+/* and keeps an SSE connection open, and we push it updates as they      */
+/* happen. No websocket lib needed — SSE is all a one-way push like       */
+/* this needs, and Chromium (what OBS's browser source runs) supports    */
+/* it natively. The Wordle overlay is served from a real file            */
+/* (lib/wordleOverlay.html) rather than an inline template string like   */
+/* the other two below — it's a few hundred lines of ported CSS/JS,       */
+/* big enough that embedding it here would make this file unwieldy and   */
+/* the ported script leans on JS template literals that would clash      */
+/* with being nested inside this file's own.                            */
 /*                                                                     */
 /* SFX_DIR is a fixed folder next to the app (see lib/paths.js) — files */
 /* land there via the Tauri "import_sfx_file" command, which copies     */
 /* whatever the user picks from anywhere on disk into it, so this never */
 /* has to deal with an arbitrary/unwritable source location.            */
 /*                                                                     */
-/* Both overlays are opt-in by nature — the server just serves the      */
+/* All three overlays are opt-in by nature — the server just serves the  */
 /* routes, nothing happens unless the user actually adds the URL as an   */
 /* OBS Browser Source, same reasoning as the SFX overlay always running   */
 /* whether or not anyone's added it.                                    */
@@ -27,6 +34,7 @@ const { SFX_SERVER_PORT } = require("./env");
 const app = express();
 const clients = new Set();
 const nowPlayingClients = new Set();
+const wordleClients = new Set();
 let lastNowPlaying = null;
 
 app.use("/files", express.static(SFX_DIR));
@@ -62,6 +70,26 @@ app.get("/nowplaying-events", (req, res) => {
   // browser source doesn't sit empty until the next 3s poll tick.
   res.write(`data: ${JSON.stringify(lastNowPlaying)}\n\n`);
   req.on("close", () => nowPlayingClients.delete(res));
+});
+
+app.get("/wordle", (req, res) => {
+  res.sendFile(path.join(__dirname, "wordleOverlay.html"));
+});
+
+app.get("/wordle-events", (req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+  res.write("\n");
+  wordleClients.add(res);
+  // Lazy require — dodges caring which of sfxServer.js/games/wordle.js bot.js
+  // happens to require first. Sends the current board immediately, same
+  // reasoning as the Now Playing snapshot above, so switching OBS scenes
+  // mid-round doesn't show a blank board until the next guess.
+  res.write(`data: ${JSON.stringify(require("./games/wordle").getSnapshot())}\n\n`);
+  req.on("close", () => wordleClients.delete(res));
 });
 
 const OVERLAY_HTML = `<!doctype html>
@@ -252,6 +280,26 @@ function pushNowPlaying(data) {
   }
 }
 
+// Pushes a one-off Wordle event (guess/win/timeout/pause/reset) to every
+// connected overlay — see lib/games/wordle.js for what triggers each.
+function pushWordleEvent(data) {
+  const payload = JSON.stringify(data);
+  for (const res of wordleClients) {
+    res.write(`data: ${payload}\n\n`);
+  }
+}
+
+// Pushes a full board snapshot (see wordle.js's getSnapshot()) to every
+// connected overlay — used when the game's toggled off entirely via !sw, so
+// open browser sources clear immediately instead of sitting on a stale
+// board.
+function pushWordleState(data) {
+  const payload = JSON.stringify(data);
+  for (const res of wordleClients) {
+    res.write(`data: ${payload}\n\n`);
+  }
+}
+
 let server = null;
 function start() {
   if (server) return;
@@ -261,7 +309,8 @@ function start() {
     console.log(`[SFX] Browser source URL: http://localhost:${SFX_SERVER_PORT}/overlay`);
     console.log(`[SFX] Drop .mp3/.wav/.ogg files in: ${SFX_DIR}`);
     console.log(`[NOWPLAYING] Browser source URL: http://localhost:${SFX_SERVER_PORT}/nowplaying`);
+    console.log(`[WORDLE] Browser source URL: http://localhost:${SFX_SERVER_PORT}/wordle`);
   });
 }
 
-module.exports = { start, playFile, pushNowPlaying, SFX_DIR };
+module.exports = { start, playFile, pushNowPlaying, pushWordleEvent, pushWordleState, SFX_DIR };

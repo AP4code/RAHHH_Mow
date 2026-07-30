@@ -827,6 +827,58 @@ fn import_sfx_file(app: tauri::AppHandle, source_path: String) -> Result<String,
     Ok(dest_name)
 }
 
+// One-time migration from the standalone WordleChatV5 exe (missmeowzaki's
+// previous setup — a separate process she started/stopped by hand) into
+// this app's own data/wordleWins.json, so folding Wordle into rahhh doesn't
+// wipe anyone's existing win count. Safe to run more than once: each
+// user's count is the MAX of their existing and legacy values, never
+// lowered, so re-running (or running it after she's already played some
+// rounds in the new system) can't stomp newer progress or double-count.
+#[tauri::command]
+fn import_wordle_wins(app: tauri::AppHandle) -> Result<String, String> {
+    let appdata = std::env::var("APPDATA").map_err(|_| "Could not resolve %APPDATA%.".to_string())?;
+    let legacy_path = PathBuf::from(appdata).join("WordleChatGame").join("wins.json");
+
+    if !legacy_path.exists() {
+        return Err(format!(
+            "No standalone Wordle leaderboard found at {:?}.",
+            legacy_path
+        ));
+    }
+
+    let legacy_raw = fs::read_to_string(&legacy_path)
+        .map_err(|e| format!("Cannot read {:?}: {}", legacy_path, e))?;
+    let legacy: HashMap<String, i64> =
+        serde_json::from_str(&legacy_raw).map_err(|e| format!("Legacy wins.json is malformed: {}", e))?;
+
+    let data_path = get_root(&app).join("data").join("wordleWins.json");
+    let mut current: HashMap<String, i64> = if data_path.exists() {
+        let raw = fs::read_to_string(&data_path).map_err(|e| e.to_string())?;
+        serde_json::from_str(&raw).unwrap_or_default()
+    } else {
+        HashMap::new()
+    };
+
+    let count = legacy.len();
+    for (user, legacy_wins) in legacy {
+        let entry = current.entry(user).or_insert(0);
+        if legacy_wins > *entry {
+            *entry = legacy_wins;
+        }
+    }
+
+    if let Some(parent) = data_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    fs::write(
+        &data_path,
+        serde_json::to_string_pretty(&current).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| format!("Cannot write {:?}: {}", data_path, e))?;
+
+    Ok(format!("Imported {} legacy win record(s).", count))
+}
+
 fn percent_encode(s: &str) -> String {
     let mut out = String::new();
     for byte in s.bytes() {
@@ -1042,7 +1094,8 @@ fn main() {
             download_clip,
             pick_download_folder,
             pick_sfx_file,
-            import_sfx_file
+            import_sfx_file,
+            import_wordle_wins
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

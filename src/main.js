@@ -632,9 +632,11 @@ const snacksPage = document.getElementById("snacksPage");
 const commandsPage = document.getElementById("commandsPage");
 const redeemsPage = document.getElementById("redeemsPage");
 const songsPage = document.getElementById("songsPage");
+const wordlePage = document.getElementById("wordlePage");
 
 const pages = [
   dashboard,
+  wordlePage,
   listsPage,
   clipsPage,
   snacksPage,
@@ -1484,6 +1486,7 @@ async function loadCheckInSettings() {
     document.getElementById("ciEnabled").checked = Boolean(settings.enabled);
     document.getElementById("ciPointsPerCheckIn").value = settings.pointsPerCheckIn || 1;
     document.getElementById("ciMessage").value = settings.message || "";
+    document.getElementById("ciMessage2").value = settings.message2 || "";
     checkInPendingRedeemId = settings.redeemId || "";
   } catch (err) {
     console.error(err);
@@ -1521,6 +1524,7 @@ document.getElementById("saveCheckInSettings").onclick = async () => {
       redeemId: document.getElementById("ciRedeemSelect").value,
       pointsPerCheckIn: parseInt(document.getElementById("ciPointsPerCheckIn").value, 10) || 1,
       message: document.getElementById("ciMessage").value.trim(),
+      message2: document.getElementById("ciMessage2").value.trim(),
     };
     await invoke("save_list", { name: "checkInSettings", content: settings });
     btn.textContent = "Saved!";
@@ -1685,6 +1689,266 @@ function startSnackEdit(row, user, currentCount) {
   };
 }
 
+/* ---------- WORDLE PAGE (same tab/slide layout + leaderboard pattern as
+   Daily Check-In's settings/points panels) ---------- */
+
+const wordleNav = document.getElementById("wordleNav");
+const wordleWinsListEl = document.getElementById("wordleWinsList");
+let wordleLoaded = false;
+let wordleWinsData = {};
+
+// Same scroll-reveal mechanism as the Daily Check-In leaderboard — see its
+// own snacksRevealObserver just above for the full explanation.
+const wordleRevealObserver = new IntersectionObserver(
+  (entries) => {
+    for (const entry of entries) {
+      entry.target.classList.toggle("in-view", entry.isIntersecting);
+    }
+  },
+  { root: wordleWinsListEl.closest(".sr-queue-col"), threshold: 0.5 }
+);
+
+wordleNav.onclick = () => {
+  setActive(wordleNav);
+  showPage(wordlePage);
+  if (!wordleLoaded) {
+    loadWordleWins();
+    loadWordleSettings();
+  }
+};
+
+const wordleTabSettings = document.getElementById("wordleTabSettings");
+const wordleTabLeaderboard = document.getElementById("wordleTabLeaderboard");
+const wordleSlider = document.getElementById("wordleSlider");
+
+function showWordleTab(tab) {
+  const showLeaderboard = tab === "leaderboard";
+  wordleSlider.classList.toggle("show-queue", showLeaderboard);
+  wordleTabSettings.classList.toggle("active", !showLeaderboard);
+  wordleTabLeaderboard.classList.toggle("active", showLeaderboard);
+}
+
+wordleTabSettings.onclick = () => showWordleTab("settings");
+wordleTabLeaderboard.onclick = () => showWordleTab("leaderboard");
+
+async function loadWordleSettings() {
+  try {
+    const settings = await invoke("load_list", { name: "wordleSettings" });
+    document.getElementById("wordleChatCommand").value = settings.chatCommand || "!sw";
+    document.getElementById("wordleRoundDuration").value = settings.roundDurationSeconds || 105;
+    document.getElementById("wordleAutoRestartDelay").value = settings.autoRestartDelaySeconds || 10;
+  } catch (err) {
+    console.error(err);
+  }
+
+  try {
+    const env = await invoke("load_env");
+    document.getElementById("wordleOverlayUrl").value = `http://localhost:${env.SFX_SERVER_PORT || 8420}/wordle`;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+document.getElementById("saveWordleSettings").onclick = async () => {
+  const btn = document.getElementById("saveWordleSettings");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+
+  try {
+    const settings = {
+      chatCommand: document.getElementById("wordleChatCommand").value.trim() || "!sw",
+      roundDurationSeconds: parseInt(document.getElementById("wordleRoundDuration").value, 10) || 105,
+      autoRestartDelaySeconds: parseInt(document.getElementById("wordleAutoRestartDelay").value, 10) || 10,
+    };
+    await invoke("save_list", { name: "wordleSettings", content: settings });
+    btn.textContent = "Saved!";
+  } catch (e) {
+    alert("Error saving Wordle settings: " + e);
+  } finally {
+    setTimeout(() => { btn.textContent = "Save Settings"; btn.disabled = false; }, 1500);
+  }
+};
+
+document.getElementById("copyWordleOverlayUrl").onclick = async () => {
+  const btn = document.getElementById("copyWordleOverlayUrl");
+  await navigator.clipboard.writeText(document.getElementById("wordleOverlayUrl").value);
+  btn.textContent = "Copied!";
+  setTimeout(() => { btn.textContent = "Copy"; }, 1200);
+};
+
+document.getElementById("importWordleWins").onclick = async () => {
+  const btn = document.getElementById("importWordleWins");
+  const status = document.getElementById("importWordleWinsStatus");
+  const original = status.textContent;
+  btn.disabled = true;
+  try {
+    const result = await invoke("import_wordle_wins");
+    status.textContent = result;
+    await loadWordleWins();
+  } catch (e) {
+    status.textContent = "Import failed: " + e;
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => { status.textContent = original; }, 6000);
+  }
+};
+
+document.getElementById("resetWordleWins").onclick = async () => {
+  if (!confirm("Clear the entire Wordle leaderboard? This can't be undone.")) return;
+  wordleWinsData = {};
+  await invoke("save_list", { name: "wordleWins", content: wordleWinsData });
+  renderWordleWins();
+};
+
+document.getElementById("refreshWordleWins").onclick = () => loadWordleWins();
+
+document.getElementById("wordleWinsSearch").oninput = (e) => {
+  renderWordleWins(e.target.value);
+};
+
+document.getElementById("addWordleWinUser").onclick = () => {
+  const list = document.getElementById("wordleWinsList");
+  if (document.getElementById("wordleWinAddRow")) return;
+
+  const addRow = document.createElement("div");
+  addRow.className = "snack-row snack-add-row";
+  addRow.id = "wordleWinAddRow";
+  addRow.innerHTML = `
+    <input class="snack-add-name" placeholder="username">
+    <input class="snack-input" type="number" min="0" value="0">
+    <div class="snack-actions">
+      <button class="snack-save-btn logs-clear-btn">Add</button>
+      <button class="snack-cancel-btn">Cancel</button>
+    </div>
+  `;
+  list.prepend(addRow);
+  wordleRevealObserver.observe(addRow);
+  addRow.querySelector(".snack-add-name").focus();
+
+  const doAdd = async () => {
+    const username = addRow.querySelector(".snack-add-name").value.trim().toLowerCase();
+    const count = parseInt(addRow.querySelector(".snack-input").value, 10);
+    if (!username) return;
+    wordleWinsData[username] = isNaN(count) ? 0 : count;
+    await invoke("save_list", { name: "wordleWins", content: wordleWinsData });
+    renderWordleWins(document.getElementById("wordleWinsSearch").value);
+  };
+
+  addRow.querySelector(".snack-save-btn").onclick = doAdd;
+  addRow.querySelector(".snack-cancel-btn").onclick = () =>
+    renderWordleWins(document.getElementById("wordleWinsSearch").value);
+  addRow.querySelector(".snack-add-name").onkeydown = (e) => {
+    if (e.key === "Enter") doAdd();
+    if (e.key === "Escape") renderWordleWins(document.getElementById("wordleWinsSearch").value);
+  };
+};
+
+async function loadWordleWins() {
+  const list = document.getElementById("wordleWinsList");
+  list.innerHTML = '<div class="snacks-empty">Loading…</div>';
+  wordleLoaded = false;
+  try {
+    wordleWinsData = await invoke("load_list", { name: "wordleWins" });
+    renderWordleWins();
+    wordleLoaded = true;
+  } catch (e) {
+    list.innerHTML = `<div class="snacks-empty">Could not load wordleWins.json: ${e}</div>`;
+  }
+}
+
+function renderWordleWins(filter = "") {
+  const list = document.getElementById("wordleWinsList");
+  const total = Object.keys(wordleWinsData).length;
+  document.getElementById("wordleWinsCount").textContent = total;
+
+  // Same dense ranking as the Daily Check-In leaderboard — rank comes from
+  // standing in the FULL list, not whatever's currently filtered.
+  const allSorted = Object.entries(wordleWinsData).sort((a, b) => b[1] - a[1]);
+  const rankOf = new Map();
+  let rank = 0;
+  let prevCount = null;
+  allSorted.forEach(([user, count]) => {
+    if (count !== prevCount) {
+      rank += 1;
+      prevCount = count;
+    }
+    rankOf.set(user, rank);
+  });
+
+  const entries = allSorted.filter(([user]) => !filter || user.toLowerCase().includes(filter.toLowerCase()));
+
+  wordleRevealObserver.disconnect();
+
+  if (!entries.length) {
+    list.innerHTML = total
+      ? `<div class="snacks-empty">No matches for "${escapeHtml(filter)}"</div>`
+      : '<div class="snacks-empty">No wins recorded yet.</div>';
+    return;
+  }
+
+  list.innerHTML = "";
+  entries.forEach(([user, count]) => {
+    const rank = rankOf.get(user);
+    const row = document.createElement("div");
+    row.className = "snack-row";
+    if (rank <= 3) row.classList.add(`rank-${rank}`);
+    row.dataset.user = user;
+    row.innerHTML = `
+      <span class="snack-rank">#${rank}</span>
+      <span class="snack-name">${escapeHtml(user)}</span>
+      <span class="snack-count">${count}</span>
+      <div class="snack-actions">
+        <button class="snack-edit-btn logs-clear-btn">Edit</button>
+        <button class="snack-del-btn">✕</button>
+      </div>
+    `;
+
+    row.querySelector(".snack-edit-btn").onclick = () => startWordleWinEdit(row, user, count);
+
+    row.querySelector(".snack-del-btn").onclick = async () => {
+      if (!confirm(`Remove ${user} from the leaderboard?`)) return;
+      delete wordleWinsData[user];
+      await invoke("save_list", { name: "wordleWins", content: wordleWinsData });
+      renderWordleWins(document.getElementById("wordleWinsSearch").value);
+    };
+
+    list.appendChild(row);
+    wordleRevealObserver.observe(row);
+  });
+}
+
+function startWordleWinEdit(row, user, currentCount) {
+  const countEl = row.querySelector(".snack-count");
+  const actionsEl = row.querySelector(".snack-actions");
+
+  countEl.innerHTML = `<input class="snack-input" type="number" min="0" value="${currentCount}">`;
+  actionsEl.innerHTML = `
+    <button class="snack-save-btn logs-clear-btn">Save</button>
+    <button class="snack-cancel-btn">Cancel</button>
+  `;
+
+  const input = countEl.querySelector("input");
+  input.focus();
+  input.select();
+
+  const save = async () => {
+    const val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 0) return;
+    wordleWinsData[user] = val;
+    await invoke("save_list", { name: "wordleWins", content: wordleWinsData });
+    renderWordleWins(document.getElementById("wordleWinsSearch").value);
+  };
+
+  const cancel = () => renderWordleWins(document.getElementById("wordleWinsSearch").value);
+
+  actionsEl.querySelector(".snack-save-btn").onclick = save;
+  actionsEl.querySelector(".snack-cancel-btn").onclick = cancel;
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") save();
+    if (e.key === "Escape") cancel();
+  };
+}
+
 /* ---------- COMMANDS PAGE ---------- */
 
 // Static metadata for every built-in command — used both to render the
@@ -1709,6 +1973,12 @@ const BUILTIN_COMMANDS = [
   { key: "queue", trigger: "!queue", description: "Shows upcoming songs. !queue N shows N instead of the configured default." },
   { key: "next", trigger: "!next", description: "Shows the very next upcoming song." },
   { key: "add", trigger: "!add", description: "Mod/broadcaster only. Adds whatever's currently playing on Spotify to the configured playlist." },
+  { key: "startWordle", trigger: null, label: "!sw (configurable in Wordle)", description: "Mod/broadcaster only. Toggles the Wordle game on/off." },
+  { key: "wordlePause", trigger: "!pause", description: "Mod/broadcaster only. Pauses the current Wordle round's timer." },
+  { key: "wordlePlay", trigger: "!play", description: "Mod/broadcaster only. Resumes a paused Wordle round (alias: !resume)." },
+  { key: "wordleReset", trigger: "!reset", description: "Mod/broadcaster only. Force-starts a new Wordle round (alias: !restart)." },
+  { key: "wordleTopWins", trigger: "!topwins", description: "Shows the top 5 Wordle win counts." },
+  { key: "wordleHelp", trigger: "!help", description: "Explains how to play Wordle." },
 ];
 
 const PERMISSION_LABELS = {

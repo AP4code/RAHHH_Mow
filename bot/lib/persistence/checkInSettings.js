@@ -14,7 +14,11 @@ const DEFAULTS = {
   enabled: false,
   redeemId: "",
   pointsPerCheckIn: 1,
-  message: "{user} just checked in! They now have {value} check-in point(s).",
+  // Sent as two separate chat messages, back to back — matches the exact
+  // two-line format the previous check-in bot used, so the switch to
+  // sending from rahhh itself doesn't change what viewers actually see.
+  message: "{user} has checked in! Thank you for being here! <3",
+  message2: "{user} now has {value} delicious Smoky snack(s)!",
 };
 
 // Stable object reference (never reassigned) — same reasoning as

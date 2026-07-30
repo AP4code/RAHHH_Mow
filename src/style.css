@@ -246,15 +246,16 @@ textarea::-webkit-scrollbar-thumb:active {
     cursor: grabbing;
 }
 
-/* #songsPage/#snacksPage/#settingsPage do NOT scroll as one long page —
-   their two halves (Settings / Queue, or Settings / Logs) are
-   separately-scrolling slide panels within a fixed-height viewport, so the
-   page itself must stay a bounded flex column instead of growing to fit
-   both stacked. See .sr-slider below — shared by the Song Requests, Daily
-   Check-In, and Settings+Logs pages, same layout system for all three. */
+/* #songsPage/#snacksPage/#settingsPage/#wordlePage do NOT scroll as one
+   long page — their two halves (Settings / Queue, Settings / Logs, or
+   Settings / Leaderboard) are separately-scrolling slide panels within a
+   fixed-height viewport, so the page itself must stay a bounded flex
+   column instead of growing to fit both stacked. See .sr-slider below —
+   shared by all four pages, same layout system for each. */
 #songsPage,
 #snacksPage,
-#settingsPage {
+#settingsPage,
+#wordlePage {
     max-width: 1200px;
     width: 100%;
     align-self: center;
@@ -369,7 +370,8 @@ textarea::-webkit-scrollbar-thumb:active {
 
     #songsPage,
     #snacksPage,
-    #settingsPage {
+    #settingsPage,
+    #wordlePage {
         overflow-y: auto;
         overflow-x: hidden;
         scrollbar-width: none;

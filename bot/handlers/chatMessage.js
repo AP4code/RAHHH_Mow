@@ -3,6 +3,7 @@ const { TARGET_CHANNEL_LOGIN } = require("../lib/env");
 const commands = require("../commands");
 const shoutouts = require("../lib/shoutouts");
 const cointoss = require("../lib/games/coinToss");
+const wordle = require("../lib/games/wordle");
 
 function badgeSet(event) {
   return new Set((event.badges || []).map((b) => b.set_id));
@@ -41,8 +42,15 @@ async function onChatMessage(event) {
   };
 
   if (await commands.dispatch(ctx)) return;
+  if (!login) return;
 
-  if (!login || login === TARGET_CHANNEL_LOGIN.toLowerCase()) return;
+  // Guess-checking runs before the broadcaster-exclusion check below — she
+  // needs to be able to play too, unlike the shoutout/coin-toss activity
+  // tracking that check exists for. wordle.handleGuess() is a no-op unless
+  // the game's actually been toggled on via !sw either way.
+  await wordle.handleGuess(login, message);
+
+  if (login === TARGET_CHANNEL_LOGIN.toLowerCase()) return;
 
   // Passive tail logic — only for messages that didn't match a command.
   shoutouts.maybeQueueVipShoutout(login);

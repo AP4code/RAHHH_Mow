@@ -39,6 +39,7 @@
 
       <nav>
         <button class="nav-btn active" id="dashNav">Dashboard</button>
+        <button class="nav-btn" id="wordleNav">Wordle</button>
         <button class="nav-btn" id="listsNav">Lists</button>
         <button class="nav-btn" id="clipsNav">Clips</button>
         <button class="nav-btn" id="snacksNav">Daily Check In</button>
@@ -85,6 +86,71 @@
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- WORDLE PAGE (same tab-slide layout as Song Requests/Daily
+           Check-In/Settings+Logs, see .sr-page-tabs in style.css) -->
+      <div id="wordlePage" style="display:none;">
+        <div class="sr-page-tabs">
+          <button type="button" class="sr-page-tab active" id="wordleTabSettings">Wordle</button>
+          <button type="button" class="sr-page-tab" id="wordleTabLeaderboard">Leaderboard</button>
+        </div>
+
+        <div class="sr-slider-viewport">
+          <div class="sr-slider" id="wordleSlider">
+            <div class="sr-settings-col">
+              <div class="settings-section">
+                <p class="settings-section-label">Wordle</p>
+                <div class="settings-field">
+                  <label for="wordleChatCommand">Start/stop chat command</label>
+                  <input id="wordleChatCommand" placeholder="!sw" autocomplete="off">
+                  <span class="field-hint">Mod/broadcaster only. Toggles the whole game on and off — !pause/!play/!reset control an already-active round.</span>
+                </div>
+                <div class="settings-field">
+                  <label for="wordleRoundDuration">Round duration (seconds)</label>
+                  <input id="wordleRoundDuration" type="number" min="10" value="105">
+                </div>
+                <div class="settings-field">
+                  <label for="wordleAutoRestartDelay">Delay before next round (seconds)</label>
+                  <input id="wordleAutoRestartDelay" type="number" min="1" value="10">
+                  <span class="field-hint">How long after a win or timeout before a new round starts automatically.</span>
+                </div>
+                <div class="settings-field">
+                  <label for="wordleOverlayUrl">Browser Source URL</label>
+                  <div class="settings-token-wrap">
+                    <input id="wordleOverlayUrl" readonly>
+                    <button type="button" class="toggle-vis" id="copyWordleOverlayUrl">Copy</button>
+                  </div>
+                  <span class="field-hint">Add this as a Browser Source in OBS to show the board.</span>
+                </div>
+                <button type="button" id="saveWordleSettings" class="primary">Save Settings</button>
+              </div>
+
+              <div class="settings-section">
+                <p class="settings-section-label">Leaderboard tools</p>
+                <div class="settings-field">
+                  <button type="button" id="importWordleWins" class="logs-clear-btn">Import Legacy Leaderboard</button>
+                  <span class="field-hint" id="importWordleWinsStatus">Pulls win counts from the old standalone Wordle exe's save file (%APPDATA%\WordleChatGame\wins.json) — safe to run more than once, existing counts are never lowered.</span>
+                </div>
+                <div class="settings-field">
+                  <button type="button" id="resetWordleWins" class="logs-clear-btn">Reset Leaderboard</button>
+                  <span class="field-hint">Clears every recorded win. Can't be undone.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sr-queue-col">
+              <div class="snacks-header">
+                <h2>Leaderboard</h2>
+                <span class="list-count" id="wordleWinsCount">0</span>
+                <input id="wordleWinsSearch" class="snacks-search" placeholder="Search user...">
+                <button id="addWordleWinUser" class="logs-clear-btn">+ Add</button>
+                <button id="refreshWordleWins" class="logs-clear-btn">Refresh</button>
+              </div>
+              <div id="wordleWinsList" class="snacks-list"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -385,9 +451,13 @@
                   <input id="ciPointsPerCheckIn" type="number" min="1" value="1">
                 </div>
                 <div class="settings-field">
-                  <label for="ciMessage">Chat message</label>
-                  <input id="ciMessage" placeholder="{user} just checked in! They now have {value} check-in point(s).">
-                  <span class="field-hint">Placeholders: {user}, {value} (their new point total). Sent from your own (streamer) account, not the bot.</span>
+                  <label for="ciMessage">Chat message (1st line)</label>
+                  <input id="ciMessage" placeholder="{user} has checked in! Thank you for being here! <3">
+                </div>
+                <div class="settings-field">
+                  <label for="ciMessage2">Chat message (2nd line)</label>
+                  <input id="ciMessage2" placeholder="{user} now has {value} delicious Smoky snack(s)!">
+                  <span class="field-hint">Sent as two separate messages, back to back. Placeholders: {user}, {value} (their new point total). Sent from your own (streamer) account, not the bot.</span>
                 </div>
                 <button type="button" id="saveCheckInSettings" class="primary">Save Settings</button>
               </div>

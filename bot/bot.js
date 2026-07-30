@@ -13,6 +13,8 @@ const songSettingsStore = require("./lib/persistence/songSettings");
 const songBlocklistStore = require("./lib/persistence/songBlocklist");
 const nowPlayingStore = require("./lib/persistence/nowPlaying");
 const checkInSettingsStore = require("./lib/persistence/checkInSettings");
+const wordleWinsStore = require("./lib/persistence/wordleWins");
+const wordleSettingsStore = require("./lib/persistence/wordleSettings");
 const spotifyAuth = require("./lib/spotifyAuth");
 const songQueueScheduler = require("./lib/songQueueScheduler");
 const sfxServer = require("./lib/sfxServer");
@@ -102,6 +104,10 @@ process.on("SIGINT", () => {
   nowPlayingStore.ensureFile();
   checkInSettingsStore.loadSettings();
   checkInSettingsStore.watch();
+  wordleWinsStore.loadWins();
+  wordleWinsStore.watch();
+  wordleSettingsStore.loadSettings();
+  wordleSettingsStore.watch();
   sfxServer.start();
   // Every command module has already registered its editable messages by
   // this point (they were all require()'d transitively above), so the
@@ -149,6 +155,13 @@ process.on("SIGINT", () => {
   const live = await auth.isChannelLive(state.broadcasterId, auth.streamerToken);
   if (!live) sessionStore.reset("cleared (channel offline at startup)");
   sessionStore.session.live = live;
+  // The stream.online EventSub handler (handlers/notifications.js) is what
+  // normally sets this, but that only fires on an offline->online
+  // transition — if the bot starts while already live (the common case:
+  // she's usually already streaming before opening the app), that handler
+  // never fires this session, and games/coinToss.js's uptime gate would stay
+  // stuck forever without this.
+  if (live && !sessionStore.session.liveSince) sessionStore.session.liveSince = Date.now();
   sessionStore.save();
 
   chatConnection.connect();

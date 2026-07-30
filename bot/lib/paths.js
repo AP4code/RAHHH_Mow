@@ -13,6 +13,8 @@ const SONG_SETTINGS_PATH = path.join(DATA_DIR, "songRequestSettings.json");
 const SONG_BLOCKLIST_PATH = path.join(DATA_DIR, "songBlocklist.json");
 const NOW_PLAYING_PATH = path.join(DATA_DIR, "nowPlaying.json");
 const CHECKIN_SETTINGS_PATH = path.join(DATA_DIR, "checkInSettings.json");
+const WORDLE_WINS_PATH = path.join(DATA_DIR, "wordleWins.json");
+const WORDLE_SETTINGS_PATH = path.join(DATA_DIR, "wordleSettings.json");
 
 const SFX_DIR = path.resolve(ROOT_DIR, "sfx");
 
@@ -29,5 +31,7 @@ module.exports = {
   SONG_BLOCKLIST_PATH,
   NOW_PLAYING_PATH,
   CHECKIN_SETTINGS_PATH,
+  WORDLE_WINS_PATH,
+  WORDLE_SETTINGS_PATH,
   SFX_DIR,
 };

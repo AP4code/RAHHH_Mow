@@ -39,8 +39,11 @@ async function handleCheckInRedemption(event) {
     );
   }
 
-  const text = settings.message || "{user} just checked in! They now have {value} check-in point(s).";
-  await sendStreamerChat(fillTemplate(text, { user: login, value }));
+  const vars = { user: login, value };
+  const line1 = settings.message || "{user} has checked in! Thank you for being here! <3";
+  const line2 = settings.message2 || "{user} now has {value} delicious Smoky snack(s)!";
+  await sendStreamerChat(fillTemplate(line1, vars));
+  await sendStreamerChat(fillTemplate(line2, vars));
 }
 
 module.exports = { handleCheckInRedemption };
