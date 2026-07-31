@@ -585,8 +585,12 @@
                   <span class="field-hint">Default count when nobody types a number, e.g. !queue 6</span>
                 </div>
                 <div class="settings-field">
-                  <label for="srPlaylistId">Spotify playlist ID (optional)</label>
-                  <input id="srPlaylistId" placeholder="Spotify playlist ID">
+                  <label for="srPlaylistBtn">Playlist (optional)</label>
+                  <div class="tz-dropdown" id="srPlaylistDropdown">
+                    <input type="hidden" id="srPlaylistId">
+                    <button type="button" class="tz-dropdown-btn" id="srPlaylistBtn">Connect Spotify to list your playlists…</button>
+                    <div class="tz-dropdown-list" id="srPlaylistList"></div>
+                  </div>
                   <span class="field-hint">Mods/broadcaster can add whatever's currently playing to this playlist with !add.</span>
                 </div>
               </div>
@@ -603,6 +607,15 @@
                   <button type="button" class="toggle-vis" id="copyNowPlayingOverlayUrl">Copy</button>
                 </div>
                 <span class="field-hint">Shows album art, title, artist, and a progress bar for whatever's currently playing.</span>
+              </div>
+              <div class="settings-field">
+                <label for="nowPlayingAlignBtn">Card alignment</label>
+                <div class="tz-dropdown" id="nowPlayingAlignDropdown">
+                  <input type="hidden" id="nowPlayingAlign" value="left">
+                  <button type="button" class="tz-dropdown-btn" id="nowPlayingAlignBtn">Left</button>
+                  <div class="tz-dropdown-list" id="nowPlayingAlignList"></div>
+                </div>
+                <span class="field-hint">Updates any open OBS browser source immediately — no need to reload it.</span>
               </div>
 
               <div class="commands-section-divider">

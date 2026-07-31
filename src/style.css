@@ -737,6 +737,9 @@ textarea::-webkit-scrollbar-thumb:active {
     cursor: pointer;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tz-dropdown-btn::after {

@@ -1040,10 +1040,25 @@ function initTimezoneDropdown() {
     if (e.key === "Escape") closeList();
   });
 
-  // The popup's position is computed once at open time; if the settings
-  // page scrolls underneath it, just close it rather than let it drift
-  // away from the button.
-  settingsPage.addEventListener("scroll", closeList);
+  // The popup's position is computed once at open time; if anything
+  // scrolls underneath it, just close it rather than let it drift away
+  // from the button. Registered on document with capture:true rather than
+  // on a specific scrolling container, because "scroll" doesn't bubble and
+  // which element actually scrolls here is responsive — .sr-settings-col
+  // owns it below the 1150px breakpoint, #settingsPage itself above it
+  // (see style.css's @media (min-width: 1150px) block). A capture-phase
+  // listener on document sees a scroll fired on any descendant either way —
+  // except the popup list itself also scrolls internally (long timezone
+  // list), so that has to be excluded or scrolling inside it would
+  // immediately close it.
+  document.addEventListener(
+    "scroll",
+    (e) => {
+      if (list.contains(e.target)) return;
+      closeList();
+    },
+    true
+  );
 }
 
 document.getElementById("browseDownloadLocation").onclick = async () => {
@@ -1973,6 +1988,7 @@ const BUILTIN_COMMANDS = [
   { key: "queue", trigger: "!queue", description: "Shows upcoming songs. !queue N shows N instead of the configured default." },
   { key: "next", trigger: "!next", description: "Shows the very next upcoming song." },
   { key: "add", trigger: "!add", description: "Mod/broadcaster only. Adds whatever's currently playing on Spotify to the configured playlist." },
+  { key: "skip", trigger: "!skip", description: "Mod/broadcaster only. Skips the current song — promotes the next song request into Spotify's queue first, if there is one." },
   { key: "startWordle", trigger: null, label: "!sw (configurable in Wordle)", description: "Mod/broadcaster only. Toggles the Wordle game on/off." },
   { key: "wordlePause", trigger: "!pause", description: "Mod/broadcaster only. Pauses the current Wordle round's timer." },
   { key: "wordlePlay", trigger: "!play", description: "Mod/broadcaster only. Resumes a paused Wordle round (alias: !resume)." },
@@ -3290,6 +3306,128 @@ let songQueueData = [];
 // Reward id from saved settings, applied to the dropdown once the reward
 // fetch (a separate async call) actually populates its options.
 let songRequestsPendingRedeemId = "";
+// Same idea as songRequestsPendingRedeemId above, for the playlist dropdown.
+let songRequestsPendingPlaylistId = "";
+
+// Generic version of initTimezoneDropdown's approach (see that function for
+// why: a native <select>'s open popup is rendered by the OS on
+// Windows/Chromium, so it can't be styled at all — this builds the same
+// plain styleable div instead, reusing its .tz-dropdown* CSS classes).
+// Wires up open/close/positioning once; call the returned setOptions/
+// setValue to (re)populate it afterward, e.g. once an async fetch resolves.
+// Keeps a hidden <input> in sync with the selected value so existing code
+// that reads a field by id (e.g. saveSongSettings) doesn't need to change.
+function initCustomDropdown({ dropdownId, btnId, listId, hiddenInputId, onSelect }) {
+  const dropdown = document.getElementById(dropdownId);
+  const btn = document.getElementById(btnId);
+  const list = document.getElementById(listId);
+  const hiddenInput = document.getElementById(hiddenInputId);
+
+  let options = [];
+  let value = hiddenInput.value || "";
+
+  // Same stacking-context workaround as initTimezoneDropdown: settings cards
+  // use backdrop-filter, which traps z-index per-card, so the popup is moved
+  // out to <body> and positioned with fixed coords instead.
+  document.body.appendChild(list);
+
+  function render() {
+    list.innerHTML = options
+      .map(
+        (o) =>
+          `<div class="tz-option${o.value === value ? " selected" : ""}" data-value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</div>`
+      )
+      .join("");
+    list.querySelectorAll(".tz-option").forEach((opt) => {
+      opt.onclick = () => {
+        setValue(opt.dataset.value);
+        closeList();
+        if (onSelect) onSelect(opt.dataset.value);
+      };
+    });
+  }
+
+  function openList() {
+    const rect = btn.getBoundingClientRect();
+    list.style.position = "fixed";
+    list.style.top = `${rect.bottom + 6}px`;
+    list.style.left = `${rect.left}px`;
+    list.style.width = `${rect.width}px`;
+    list.classList.add("open");
+    dropdown.classList.add("open");
+  }
+
+  function closeList() {
+    list.classList.remove("open");
+    dropdown.classList.remove("open");
+  }
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    if (list.classList.contains("open")) closeList();
+    else openList();
+  };
+
+  document.addEventListener("click", (e) => {
+    if (!list.contains(e.target) && e.target !== btn) closeList();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeList();
+  });
+
+  // See initTimezoneDropdown's matching comment: "scroll" doesn't bubble and
+  // which element actually scrolls this page is responsive, so this has to
+  // be a capture-phase listener on document rather than on one specific
+  // scrolling container, to catch a scroll fired on any descendant — except
+  // the popup list itself, which also scrolls internally for a long option
+  // list and shouldn't close itself when that happens.
+  document.addEventListener(
+    "scroll",
+    (e) => {
+      if (list.contains(e.target)) return;
+      closeList();
+    },
+    true
+  );
+
+  function setValue(v) {
+    value = v || "";
+    hiddenInput.value = value;
+    const match = options.find((o) => o.value === value);
+    btn.textContent = match ? match.label : options[0]?.label || "";
+    render();
+  }
+
+  function setOptions(newOptions, selectedValue) {
+    options = newOptions;
+    setValue(selectedValue !== undefined ? selectedValue : value);
+  }
+
+  return { setValue, setOptions, getValue: () => value };
+}
+
+const srPlaylistDropdown = initCustomDropdown({
+  dropdownId: "srPlaylistDropdown",
+  btnId: "srPlaylistBtn",
+  listId: "srPlaylistList",
+  hiddenInputId: "srPlaylistId",
+});
+
+const nowPlayingAlignDropdown = initCustomDropdown({
+  dropdownId: "nowPlayingAlignDropdown",
+  btnId: "nowPlayingAlignBtn",
+  listId: "nowPlayingAlignList",
+  hiddenInputId: "nowPlayingAlign",
+});
+nowPlayingAlignDropdown.setOptions(
+  [
+    { value: "left", label: "Left" },
+    { value: "center", label: "Center" },
+    { value: "right", label: "Right" },
+  ],
+  "left"
+);
 
 songsNav.onclick = () => {
   setActive(songsNav);
@@ -3351,7 +3489,8 @@ async function loadSongsPage() {
     document.getElementById("srMaxDuration").value = settings.maxDurationMinutes || 0;
     document.getElementById("srPromoteBeforeEnd").value = settings.promoteBeforeEndSeconds || 5;
     document.getElementById("srQueueDisplayCount").value = settings.queueDisplayCount || 4;
-    document.getElementById("srPlaylistId").value = settings.addToPlaylistId || "";
+    songRequestsPendingPlaylistId = settings.addToPlaylistId || "";
+    nowPlayingAlignDropdown.setValue(settings.nowPlayingAlign || "left");
 
     const allowedChatRoles = settings.chatPermissions || ["follower"];
     document.querySelectorAll('#srChatPermissionChecks input[type="checkbox"]').forEach((cb) => {
@@ -3382,6 +3521,7 @@ async function loadSongsPage() {
   }
 
   loadSongRequestRewards();
+  loadSongRequestPlaylists();
   loadSongQueue();
 }
 
@@ -3403,6 +3543,89 @@ async function loadSongRequestRewards() {
   }
 }
 
+// Mirrors fetchRewardsFromTwitch's shape — reads the Spotify access token
+// straight out of .env (same pattern getStreamerHelixContext uses for the
+// streamer's Twitch token) and pages through /me/playlists, since a user
+// with more than 50 playlists needs more than one request.
+async function fetchUserPlaylistsFromSpotify() {
+  const env = await invoke("load_env");
+  const token = env.SPOTIFY_ACCESS_TOKEN;
+  if (!token) throw new Error("Spotify isn't connected.");
+
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const meRes = await fetch("https://api.spotify.com/v1/me", { headers });
+  if (!meRes.ok) {
+    const errBody = await meRes.json().catch(() => ({}));
+    throw new Error(errBody.error?.message || `Spotify returned ${meRes.status}.`);
+  }
+  const me = await meRes.json();
+
+  let url = "https://api.spotify.com/v1/me/playlists?limit=50";
+  const playlists = [];
+
+  while (url) {
+    const res = await fetch(url, { headers });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(
+        errBody.error?.message || `Spotify returned ${res.status}. Try reconnecting Spotify to grant playlist access.`
+      );
+    }
+    const data = await res.json();
+    playlists.push(...(data.items || []).filter(Boolean));
+    url = data.next;
+  }
+
+  // /me/playlists also lists playlists you merely follow, not just ones you
+  // own — those look selectable here but Spotify rejects a write to them
+  // (POST /playlists/{id}/tracks 403s for anyone without edit rights), so
+  // they're filtered out rather than left in as a trap that only fails once
+  // someone actually tries !add on one.
+  return playlists.filter((p) => p.owner?.id === me.id || p.collaborative);
+}
+
+async function loadSongRequestPlaylists() {
+  const env = await invoke("load_env").catch(() => ({}));
+  if (!env.SPOTIFY_REFRESH_TOKEN) {
+    srPlaylistDropdown.setOptions([{ value: "", label: "Connect Spotify to list your playlists…" }], "");
+    return;
+  }
+
+  srPlaylistDropdown.setOptions([{ value: "", label: "Loading playlists…" }], "");
+  try {
+    const playlists = await fetchUserPlaylistsFromSpotify();
+    // Spotify's /me/playlists never includes Liked Songs — it isn't a real
+    // playlist object, just a separate saved-tracks collection with its own
+    // endpoint (see bot/lib/spotify.js's saveTrack). Added by hand as a
+    // synthetic option; "liked" must match commands/add.js's
+    // LIKED_SONGS_SENTINEL exactly.
+    const options = [
+      { value: "", label: "(none selected)" },
+      { value: "liked", label: "💚 Liked Songs" },
+      ...playlists.map((p) => ({ value: p.id, label: p.name })),
+    ];
+
+    // The saved id might not be in this account's playlist list — e.g. it
+    // was typed by hand under the old text-input version of this field, or
+    // the playlist's since been deleted/unfollowed. Inject it as an extra
+    // option instead of silently dropping the existing setting the next
+    // time this page gets saved.
+    const savedId = songRequestsPendingPlaylistId;
+    if (savedId && savedId !== "liked" && !playlists.some((p) => p.id === savedId)) {
+      options.push({ value: savedId, label: `Currently set: ${savedId} (not in your playlists)` });
+    }
+
+    srPlaylistDropdown.setOptions(options, savedId || "");
+  } catch (e) {
+    console.error("[SONGREQ] Failed to load playlists:", e);
+    srPlaylistDropdown.setOptions(
+      [{ value: "", label: `Couldn't load playlists: ${e.message || String(e)}` }],
+      ""
+    );
+  }
+}
+
 document.getElementById("connectSpotify").onclick = async () => {
   const btn = document.getElementById("connectSpotify");
   const clientId = document.getElementById("spotifyClientId").value.trim();
@@ -3419,6 +3642,7 @@ document.getElementById("connectSpotify").onclick = async () => {
   try {
     await invoke("spotify_login", { clientId, clientSecret });
     setSpotifyConnected(true);
+    loadSongRequestPlaylists();
 
     // Without this, a running bot process keeps the stale (unconfigured)
     // spotifyAuth state in memory forever — every !sr would silently fail
@@ -3494,6 +3718,7 @@ document.getElementById("saveSongSettings").onclick = async () => {
       promoteBeforeEndSeconds: parseInt(document.getElementById("srPromoteBeforeEnd").value, 10) || 5,
       queueDisplayCount: parseInt(document.getElementById("srQueueDisplayCount").value, 10) || 4,
       addToPlaylistId: document.getElementById("srPlaylistId").value.trim(),
+      nowPlayingAlign: document.getElementById("nowPlayingAlign").value,
       chatPermissions: Array.from(
         document.querySelectorAll('#srChatPermissionChecks input[type="checkbox"]:checked')
       ).map((cb) => cb.value),

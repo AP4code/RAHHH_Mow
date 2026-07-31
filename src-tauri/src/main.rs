@@ -404,7 +404,7 @@ fn accept_with_timeout(
 async fn spotify_login(app: tauri::AppHandle, client_id: String, client_secret: String) -> Result<(), String> {
     let redirect_uri = format!("http://127.0.0.1:{}/callback", SPOTIFY_CALLBACK_PORT);
     let state_token = random_state();
-    let scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-modify-public playlist-modify-private";
+    let scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-modify-public playlist-modify-private playlist-read-private playlist-read-collaborative user-library-modify";
 
     let auth_url = format!(
         "https://accounts.spotify.com/authorize?response_type=code&client_id={}&scope={}&redirect_uri={}&state={}",

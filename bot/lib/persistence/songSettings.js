@@ -38,6 +38,9 @@ const DEFAULTS = {
   // overrides this for that one call).
   queueDisplayCount: 4,
   addToPlaylistId: "",
+  // Horizontal position of the OBS Now Playing overlay card — "left",
+  // "center", or "right" (see lib/sfxServer.js's NOWPLAYING_HTML).
+  nowPlayingAlign: "left",
 };
 
 // Stable object reference (never reassigned) — same reasoning as
@@ -80,6 +83,11 @@ function watch() {
     console.log("[RAHHH] Reloading song request settings");
     try {
       loadSettings();
+      // Lazy require — same reasoning as lib/games/wordle.js's pushEvent():
+      // sidesteps caring about which of sfxServer/songSettings loads first,
+      // and pushes the freshly-reloaded alignment straight to any open OBS
+      // browser source instead of waiting on the next 3s playback poll.
+      require("../sfxServer").pushNowPlayingSettings(settings.nowPlayingAlign);
     } catch (e) {
       console.error("Song request settings reload failed:", e);
     }

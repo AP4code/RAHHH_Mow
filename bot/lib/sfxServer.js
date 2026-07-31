@@ -3,6 +3,15 @@ const path = require("path");
 const express = require("express");
 const { SFX_DIR } = require("./paths");
 const { SFX_SERVER_PORT } = require("./env");
+const songSettingsStore = require("./persistence/songSettings");
+
+const ALIGN_VALUES = new Set(["left", "center", "right"]);
+// Defends against a hand-edited/corrupted songRequestSettings.json — this
+// value gets interpolated directly into the served overlay HTML below, so
+// an unrecognized value is dropped to the default rather than trusted as-is.
+function safeAlign(value) {
+  return ALIGN_VALUES.has(value) ? value : "left";
+}
 
 /* ------------------------------------------------------------------ */
 /* Tiny local HTTP server whose only job is feeding OBS Browser         */
@@ -55,7 +64,7 @@ app.get("/events", (req, res) => {
 });
 
 app.get("/nowplaying", (req, res) => {
-  res.type("html").send(NOWPLAYING_HTML);
+  res.type("html").send(renderNowPlayingHtml());
 });
 
 app.get("/nowplaying-events", (req, res) => {
@@ -68,7 +77,10 @@ app.get("/nowplaying-events", (req, res) => {
   nowPlayingClients.add(res);
   // Send whatever's already known immediately, so a freshly-opened OBS
   // browser source doesn't sit empty until the next 3s poll tick.
-  res.write(`data: ${JSON.stringify(lastNowPlaying)}\n\n`);
+  res.write(`data: ${JSON.stringify({ type: "track", data: lastNowPlaying })}\n\n`);
+  res.write(
+    `data: ${JSON.stringify({ type: "settings", data: { align: safeAlign(songSettingsStore.settings.nowPlayingAlign) } })}\n\n`
+  );
   req.on("close", () => nowPlayingClients.delete(res));
 });
 
@@ -133,7 +145,14 @@ const OVERLAY_HTML = `<!doctype html>
 </body>
 </html>`;
 
-const NOWPLAYING_HTML = `<!doctype html>
+function renderNowPlayingHtml() {
+  return NOWPLAYING_HTML_TEMPLATE.replace(
+    "__ALIGN__",
+    safeAlign(songSettingsStore.settings.nowPlayingAlign)
+  );
+}
+
+const NOWPLAYING_HTML_TEMPLATE = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -145,11 +164,15 @@ const NOWPLAYING_HTML = `<!doctype html>
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     display: flex;
     align-items: flex-end;
-    justify-content: flex-start;
     width: 100vw;
     height: 100vh;
     padding: 24px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+  body[data-align="left"] { justify-content: flex-start; }
+  body[data-align="center"] { justify-content: center; }
+  body[data-align="right"] { justify-content: flex-end; }
   #card {
     display: flex;
     align-items: center;
@@ -206,7 +229,7 @@ const NOWPLAYING_HTML = `<!doctype html>
   }
 </style>
 </head>
-<body>
+<body data-align="__ALIGN__">
 <div id="card">
   <img id="art" alt="">
   <div id="text">
@@ -250,7 +273,14 @@ const NOWPLAYING_HTML = `<!doctype html>
   }
 
   const es = new EventSource("/nowplaying-events");
-  es.onmessage = (e) => render(JSON.parse(e.data));
+  es.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "settings") {
+      document.body.dataset.align = msg.data.align || "left";
+    } else {
+      render(msg.data);
+    }
+  };
 </script>
 </body>
 </html>`;
@@ -274,7 +304,19 @@ function playFile(filename, volume = 100) {
 // writes data/nowPlaying.json for the in-app Dashboard.
 function pushNowPlaying(data) {
   lastNowPlaying = data;
-  const payload = JSON.stringify(data);
+  const payload = JSON.stringify({ type: "track", data });
+  for (const res of nowPlayingClients) {
+    res.write(`data: ${payload}\n\n`);
+  }
+}
+
+// Pushes a live overlay-appearance change (currently just alignment) to
+// every connected Now Playing overlay — called from
+// lib/persistence/songSettings.js's watch() whenever
+// songRequestSettings.json changes, so a mod flipping the setting in the
+// app doesn't have to reload the OBS browser source to see it take effect.
+function pushNowPlayingSettings(align) {
+  const payload = JSON.stringify({ type: "settings", data: { align: safeAlign(align) } });
   for (const res of nowPlayingClients) {
     res.write(`data: ${payload}\n\n`);
   }
@@ -313,4 +355,12 @@ function start() {
   });
 }
 
-module.exports = { start, playFile, pushNowPlaying, pushWordleEvent, pushWordleState, SFX_DIR };
+module.exports = {
+  start,
+  playFile,
+  pushNowPlaying,
+  pushNowPlayingSettings,
+  pushWordleEvent,
+  pushWordleState,
+  SFX_DIR,
+};

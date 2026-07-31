@@ -98,7 +98,27 @@ const MESSAGES = {
   },
 };
 
-overrides.registerDefaults("wordle", MESSAGES);
+// Registered per owning command (matching each command file's own catalog
+// key) rather than one shared "wordle" key, so each command's card on the
+// Commands page gets its own "Edit messages" button. Game-lifecycle events
+// that aren't triggered by a specific typed command (timeout/win/lengthHint)
+// are grouped under startWordle, since !sw is what turns the game on in the
+// first place.
+overrides.registerDefaults("startWordle", {
+  started: MESSAGES.started,
+  stopped: MESSAGES.stopped,
+  timeout: MESSAGES.timeout,
+  win: MESSAGES.win,
+  lengthHint: MESSAGES.lengthHint,
+});
+overrides.registerDefaults("wordlePause", { paused: MESSAGES.paused });
+overrides.registerDefaults("wordlePlay", { resumed: MESSAGES.resumed });
+overrides.registerDefaults("wordleReset", { resetByMod: MESSAGES.resetByMod });
+overrides.registerDefaults("wordleTopWins", {
+  topWinsNone: MESSAGES.topWinsNone,
+  topWins: MESSAGES.topWins,
+});
+overrides.registerDefaults("wordleHelp", { help: MESSAGES.help });
 
 // Lazy require — sfxServer never needs to know about wordle.js, this just
 // dodges having to care about which of the two modules bot.js requires
@@ -176,7 +196,7 @@ async function onTimeout() {
   roundActive = false;
   pushEvent({ type: "timeout", word: secretWord });
   await sendBotMessage(
-    overrides.getMessage("wordle", "timeout", MESSAGES.timeout.default, { word: secretWord })
+    overrides.getMessage("startWordle", "timeout", MESSAGES.timeout.default, { word: secretWord })
   );
   scheduleAutoRestart();
   console.log("[WORDLE] Time up");
@@ -221,14 +241,14 @@ async function toggle() {
     currentRoundGuesses = [];
     deadLetters.clear();
     pushState();
-    await sendBotMessage(overrides.getMessage("wordle", "stopped", MESSAGES.stopped.default));
+    await sendBotMessage(overrides.getMessage("startWordle", "stopped", MESSAGES.stopped.default));
     console.log("[WORDLE] Deactivated");
     return "stopped";
   }
 
   active = true;
   paused = false;
-  await sendBotMessage(overrides.getMessage("wordle", "started", MESSAGES.started.default));
+  await sendBotMessage(overrides.getMessage("startWordle", "started", MESSAGES.started.default));
   startRound("system");
   console.log("[WORDLE] Activated");
   return "started";
@@ -245,7 +265,7 @@ async function pause(login) {
   clearTimeout(roundTimer);
   clearTimeout(autoRestartTimer);
   pushEvent({ type: "pause", value: true, remainingTime, by: login });
-  await sendBotMessage(overrides.getMessage("wordle", "paused", MESSAGES.paused.default, { login }));
+  await sendBotMessage(overrides.getMessage("wordlePause", "paused", MESSAGES.paused.default, { login }));
   console.log(`[WORDLE] Paused by ${login}`);
 }
 
@@ -255,7 +275,7 @@ async function resume(login) {
   paused = false;
   pushEvent({ type: "pause", value: false, remainingTime, by: login });
   if (roundActive && remainingTime > 0) startTimer();
-  await sendBotMessage(overrides.getMessage("wordle", "resumed", MESSAGES.resumed.default, { login }));
+  await sendBotMessage(overrides.getMessage("wordlePlay", "resumed", MESSAGES.resumed.default, { login }));
   console.log(`[WORDLE] Resumed by ${login}`);
 }
 
@@ -264,7 +284,7 @@ async function resetRound(login) {
   if (!active) return;
   paused = false;
   startRound(login);
-  await sendBotMessage(overrides.getMessage("wordle", "resetByMod", MESSAGES.resetByMod.default, { login }));
+  await sendBotMessage(overrides.getMessage("wordleReset", "resetByMod", MESSAGES.resetByMod.default, { login }));
   console.log(`[WORDLE] Reset by ${login}`);
 }
 
@@ -277,15 +297,15 @@ function getTopWins(limit = 5) {
 async function sendTopWins() {
   const top = getTopWins(5);
   if (!top.length) {
-    await sendBotMessage(overrides.getMessage("wordle", "topWinsNone", MESSAGES.topWinsNone.default));
+    await sendBotMessage(overrides.getMessage("wordleTopWins", "topWinsNone", MESSAGES.topWinsNone.default));
     return;
   }
   const list = top.map(([name, count], i) => `${i + 1}) @${name}: ${count}`).join(" | ");
-  await sendBotMessage(overrides.getMessage("wordle", "topWins", MESSAGES.topWins.default, { list }));
+  await sendBotMessage(overrides.getMessage("wordleTopWins", "topWins", MESSAGES.topWins.default, { list }));
 }
 
 async function sendHelp() {
-  await sendBotMessage(overrides.getMessage("wordle", "help", MESSAGES.help.default));
+  await sendBotMessage(overrides.getMessage("wordleHelp", "help", MESSAGES.help.default));
 }
 
 // Called from handlers/chatMessage.js's passive tail for every message that
@@ -301,7 +321,7 @@ async function handleGuess(login, rawMessage) {
     const now = Date.now();
     if (now - lastLengthHintAt > LENGTH_HINT_COOLDOWN_MS) {
       lastLengthHintAt = now;
-      await sendBotMessage(overrides.getMessage("wordle", "lengthHint", MESSAGES.lengthHint.default));
+      await sendBotMessage(overrides.getMessage("startWordle", "lengthHint", MESSAGES.lengthHint.default));
     }
     return;
   }
@@ -332,7 +352,7 @@ async function handleGuess(login, rawMessage) {
 
     pushEvent({ type: "win", user: login, word: secretWord, wins: total });
     await sendBotMessage(
-      overrides.getMessage("wordle", "win", MESSAGES.win.default, { login, word: secretWord, wins: total })
+      overrides.getMessage("startWordle", "win", MESSAGES.win.default, { login, word: secretWord, wins: total })
     );
 
     scheduleAutoRestart();

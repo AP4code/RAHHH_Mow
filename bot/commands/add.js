@@ -42,6 +42,12 @@ const MESSAGES = {
 
 overrides.registerDefaults("add", MESSAGES);
 
+// Must match the sentinel value src/main.js's playlist dropdown uses for its
+// synthetic "Liked Songs" option — that entry isn't a real Spotify playlist
+// id (see spotify.js's saveTrack), so it can't just be another value in the
+// same select-populated-from-/me/playlists list.
+const LIKED_SONGS_SENTINEL = "liked";
+
 module.exports = {
   name: "add",
   matches: (ctx) => ctx.isModOrBroadcaster && ctx.msg === "!add",
@@ -71,7 +77,11 @@ module.exports = {
     }
 
     try {
-      await spotify.addToPlaylist(playlistId, playback.item.uri);
+      if (playlistId === LIKED_SONGS_SENTINEL) {
+        await spotify.saveTrack(playback.item.id);
+      } else {
+        await spotify.addToPlaylist(playlistId, playback.item.uri);
+      }
     } catch (e) {
       console.error("[SONGREQ] !add failed to add to playlist:", e.response?.data || e.message);
       await sendBotMessage(

@@ -73,9 +73,16 @@ async function tick() {
     return;
   }
 
+  // Flipped synchronously, before the await below — same reasoning as
+  // commands/skip.js's promoteNextPending(): this is single-threaded JS, so
+  // setting status here (not after addToQueue resolves) closes the window
+  // where a mod's !skip, run while this call is in flight, could still find
+  // this same entry "pending" and promote it a second time, double-queuing
+  // the song in Spotify. Rolled back to "pending" on failure below.
+  next.status = "sent";
+
   try {
     await spotify.addToQueue(next.trackUri);
-    next.status = "sent";
     queueStore.save();
     console.log(`[SONGREQ] Promoted "${next.title}" (requested by ${next.requestedBy}) into Spotify's queue`);
 
@@ -91,6 +98,7 @@ async function tick() {
       }
     }
   } catch (e) {
+    next.status = "pending";
     console.error("[SONGREQ] Failed to promote pending request:", e.response?.data || e.message);
   } finally {
     promotedForTrackId = playback.item.id;

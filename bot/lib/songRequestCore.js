@@ -62,6 +62,104 @@ function countPendingForUser(login) {
 // of those limits, not a fixed precedence order. 0 on any qualifying tier
 // means unlimited. roles: { isBroadcaster, isModerator, isVip, subTier }
 // (subTier: null|1000|2000|3000).
+const SPOTIFY_LINK_RE = /open\.spotify\.com\/(?:intl-[a-z]{2}\/)?track\/([a-zA-Z0-9]{22})|spotify:track:([a-zA-Z0-9]{22})/i;
+const BY_SPLIT_RE = /^(.+?)\s+by\s+(.+)$/i;
+const STOPWORDS = new Set(["by", "the", "a", "an", "and", "of"]);
+const CONFIDENCE_THRESHOLD = 0.6;
+
+function parseSpotifyLink(text) {
+  const m = text.match(SPOTIFY_LINK_RE);
+  if (!m) return null;
+  return m[1] || m[2];
+}
+
+function splitTitleArtist(text) {
+  const m = text.match(BY_SPLIT_RE);
+  if (!m) return null;
+  return { title: m[1].trim(), artist: m[2].trim() };
+}
+
+function levenshtein(a, b) {
+  const m = a.length;
+  const n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function tokenize(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+// Fuzzy token match — exact match, or within a small edit-distance scaled to
+// token length, so e.g. "nilson"/"nilsson" (dist 1) still counts as a hit but
+// unrelated short tokens don't accidentally match each other.
+function tokenMatches(token, candidateTokens) {
+  return candidateTokens.some((c) => {
+    if (token === c) return true;
+    const maxLen = Math.max(token.length, c.length);
+    if (maxLen <= 3) return false;
+    const threshold = maxLen <= 5 ? 1 : maxLen <= 8 ? 2 : 3;
+    return levenshtein(token, c) <= threshold;
+  });
+}
+
+// Safety net for the two search-based paths (structured + plain fallback) —
+// rejects a match like the "coconut by harry nilson" -> "Ted Lasso" bug,
+// where Spotify's fuzzy search wandered off to something the query's words
+// don't actually resemble. Not applied to direct-link lookups, which have no
+// ambiguity to begin with.
+function isConfidentMatch(query, track) {
+  const queryTokens = tokenize(query).filter((t) => !STOPWORDS.has(t));
+  if (queryTokens.length === 0) return true;
+
+  const candidateText = `${track.name} ${(track.artists || []).map((a) => a.name).join(" ")}`;
+  const candidateTokens = tokenize(candidateText);
+
+  const matched = queryTokens.filter((t) => tokenMatches(t, candidateTokens));
+  return matched.length / queryTokens.length >= CONFIDENCE_THRESHOLD;
+}
+
+async function findTrack(trimmed) {
+  const linkId = parseSpotifyLink(trimmed);
+  if (linkId) {
+    try {
+      return (await spotify.getTrack(linkId)) || null;
+    } catch (e) {
+      console.error("[SONGREQ] Track lookup failed:", e.response?.data || e.message);
+      return null;
+    }
+  }
+
+  const split = splitTitleArtist(trimmed);
+  if (split) {
+    try {
+      const structuredQuery = `track:"${split.title}" artist:"${split.artist}"`;
+      const track = await spotify.searchTrack(structuredQuery);
+      if (track && isConfidentMatch(trimmed, track)) return track;
+    } catch (e) {
+      console.error("[SONGREQ] Structured search failed:", e.response?.data || e.message);
+    }
+  }
+
+  const track = await spotify.searchTrack(trimmed);
+  if (track && isConfidentMatch(trimmed, track)) return track;
+  return null;
+}
+
 function resolveUserLimit(roles = {}) {
   if (roles.isBroadcaster) return Infinity;
 
@@ -111,13 +209,16 @@ async function requestSong(query, requestedBy, source, roles = {}, redemption = 
 
   let track;
   try {
-    track = await spotify.searchTrack(trimmed);
+    track = await findTrack(trimmed);
   } catch (e) {
     console.error("[SONGREQ] Search failed:", e.response?.data || e.message);
     return { ok: false, reason: "Spotify search failed." };
   }
   if (!track) {
-    return { ok: false, reason: "Couldn't find that song on Spotify." };
+    return {
+      ok: false,
+      reason: 'Couldn\'t find that song — try "title by artist" or paste a Spotify link.',
+    };
   }
 
   const maxDurationMinutes = settingsStore.settings.maxDurationMinutes || 0;
