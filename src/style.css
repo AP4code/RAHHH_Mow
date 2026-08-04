@@ -13,6 +13,30 @@
     --accent-palest: #ede9fe;
     --accent-palest-rgb: 237, 233, 254;
     --accent-glow: #cbb6ff;
+
+    /* Signature type — Bangers is the shout the app is named after (used only
+       for the "RAHHH" wordmark), Big Shoulders Display carries that same
+       energy into headers/CTAs at sizes where a full comic-shout face would
+       stop being legible. Self-hosted (see @font-face below) since this is
+       an offline-capable desktop app — no CDN dependency at runtime. */
+    --font-shout: "Bangers", cursive;
+    --font-display: "Big Shoulders Display", system-ui, sans-serif;
+}
+
+@font-face {
+    font-family: "Bangers";
+    src: url("assets/fonts/Bangers-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Big Shoulders Display";
+    src: url("assets/fonts/BigShouldersDisplay-Black.woff2") format("woff2");
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
 }
 
 * {
@@ -80,11 +104,36 @@ input[type="number"] {
     z-index: 1;
 }
 
+.logo-wrap {
+    position: relative;
+    width: fit-content;
+    margin-bottom: 18px;
+}
+
+/* The claw-mark signature — reused larger behind the Dashboard power
+   button (.hero-claw) and small again on the Song Requests queue header
+   (.queue-claw). Kept to just those spots so it stays a signature rather
+   than a decoration sprinkled everywhere. */
+.logo-claw {
+    position: absolute;
+    top: -14px;
+    right: -22px;
+    width: 46px;
+    height: 54px;
+    color: var(--accent);
+    opacity: 0.4;
+    transform: rotate(6deg);
+    pointer-events: none;
+    z-index: 0;
+}
+
 .logo {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: 0.4px;
-    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-shout);
+    font-size: 32px;
+    letter-spacing: 0.5px;
+    line-height: 1;
     width: fit-content;
     background: linear-gradient(135deg, #ede9fe, #c4b5fd 55%, #f0abfc);
     -webkit-background-clip: text;
@@ -280,8 +329,10 @@ textarea::-webkit-scrollbar-thumb:active {
 
 #settingsPage h2,
 #songsPage h2 {
-    font-size: 20px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 0.2px;
 }
 
 /* Song Requests page — Settings and Queue are two full-width slide panels
@@ -297,15 +348,17 @@ textarea::-webkit-scrollbar-thumb:active {
 }
 
 /* Looks exactly like the plain <h2> it replaced (same #songsPage h2 rule:
-   20px/700) — only the color state changes to show which panel is active. */
+   var(--font-display)/900/24px) — only the color state changes to show
+   which panel is active. */
 .sr-page-tab {
     background: none;
     border: none;
     padding: 0;
     margin: 0;
-    font-family: inherit;
-    font-size: 20px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 0.2px;
     color: rgba(var(--accent-palest-rgb), 0.4);
     cursor: pointer;
     transition: color 0.15s ease;
@@ -875,6 +928,47 @@ textarea::-webkit-scrollbar-thumb:active {
     display: inline-grid;
 }
 
+/* Same claw-mark signature as .logo-claw, scaled up as ambient texture
+   behind the app's one real "hero" moment. Absolutely positioned so it
+   never affects #toggleBotGlow's own size (an inline-grid sized to the
+   button) — it just bleeds outward behind it at very low opacity. Kept
+   tight enough (180x150) not to visibly reach the header/status-card
+   above and below it. Tints red + brightens once the bot is actually
+   running (#toggleBotGlow.running, toggled in setPowerGlowTheme() in
+   main.js) — same purple-idle/red-running split the specular glow border
+   already uses, so the signature echoes real state instead of just
+   sitting there as decoration. */
+.hero-claw {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180px;
+    height: 150px;
+    transform: translate(-50%, -54%) rotate(-8deg);
+    color: var(--accent);
+    opacity: 0.13;
+    pointer-events: none;
+    z-index: 0;
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+#toggleBotGlow.running .hero-claw {
+    color: #ef4444;
+    opacity: 0.22;
+    animation: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-claw {
+        animation: hero-claw-breathe 7s ease-in-out infinite;
+    }
+}
+
+@keyframes hero-claw-breathe {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.17; }
+}
+
 #toggleBotSpecular {
     /* left/top/width/height are set directly in JS (initSpecularBorder's
        resize()), driven by the same opts.pad the drawing code uses — no
@@ -887,8 +981,11 @@ textarea::-webkit-scrollbar-thumb:active {
 .power-btn {
     padding: 16px 34px;
     border-radius: 999px;
-    font-size: 16px;
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
     border: none;
     color: white;
     cursor: pointer;
@@ -937,8 +1034,10 @@ textarea::-webkit-scrollbar-thumb:active {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 20px;
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 28px;
+    letter-spacing: 0.2px;
 }
 
 .greeting-icon {
@@ -1265,14 +1364,33 @@ textarea::-webkit-scrollbar-thumb:active {
     border-radius: 999px;
 }
 
+/* Daily Check-In's count badge only — a paw print instead of a bare number,
+   since check-ins are the app's one cozy/community feature. Kept separate
+   from the claw-mark signature on purpose: claws mark power/hero moments
+   (Start Bot), a paw marks warmth, so the two motifs stay legible as
+   different things instead of one mark diluted across the whole app. */
+.checkin-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.paw-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
 .list-col textarea {
     flex: 1;
     min-height: 200px;
 }
 
 #listsPage h2 {
-    font-size: 20px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 0.2px;
 }
 
 #listsPage > .primary {
@@ -1310,8 +1428,10 @@ textarea::-webkit-scrollbar-thumb:active {
 }
 
 .clips-header h2 {
-    font-size: 20px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 0.2px;
 }
 
 .clips-meta {
@@ -1545,8 +1665,10 @@ textarea::-webkit-scrollbar-thumb:active {
 }
 
 .snacks-header h2 {
-    font-size: 20px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 0.2px;
     flex-shrink: 0;
 }
 
@@ -1632,6 +1754,20 @@ textarea::-webkit-scrollbar-thumb:active {
     color: #d97706;
     opacity: 0.9;
     font-weight: 700;
+}
+
+/* Wordle-only: the small claw-tick that replaces "#" for top-3 ranks (see
+   wordleRankLabel() in main.js). A new standalone class, not a change to
+   .snack-rank/.rank-1/.rank-2/.rank-3 — those stay byte-identical so Daily
+   Check-In's leaderboard (renderSnacks, #snacksList), which shares those
+   classes, is unaffected. Color/opacity aren't set here — the icon's
+   stroke="currentColor" inherits .snack-rank's existing rank color. */
+.wordle-rank-claw {
+    display: inline-block;
+    width: 7px;
+    height: 10px;
+    margin-right: 3px;
+    vertical-align: -1px;
 }
 
 .snack-name {
@@ -1746,9 +1882,40 @@ textarea::-webkit-scrollbar-thumb:active {
     flex-shrink: 0;
 }
 
+/* Song Requests' Queue header only — .commands-header is shared with
+   Commands/Redeems, but the claw-mark signature ("scratch" = a claw pun
+   on the music queue) is scoped to just this one spot via .queue-claw's
+   own position, not applied to the shared class everywhere. */
+.queue-header-claw {
+    position: relative;
+}
+
+/* Unpositioned in-flow content actually paints BEHIND a z-index:0
+   positioned sibling per CSS stacking rules, not in front of it — so the
+   h2 needs its own stacking position to end up on top of .queue-claw. */
+.queue-header-claw h2 {
+    position: relative;
+    z-index: 1;
+}
+
+.queue-claw {
+    position: absolute;
+    top: -12px;
+    left: -8px;
+    width: 32px;
+    height: 38px;
+    color: var(--accent);
+    opacity: 0.28;
+    transform: rotate(6deg);
+    pointer-events: none;
+    z-index: 0;
+}
+
 .commands-header h2 {
-    font-size: 20px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 0.2px;
     flex-shrink: 0;
 }
 

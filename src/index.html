@@ -32,7 +32,22 @@
 
   <div class="app">
     <aside class="sidebar">
-      <div class="logo">RAHHH</div>
+      <div class="logo-wrap">
+        <svg class="logo-claw" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="clawFadeLogo" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="currentColor" stop-opacity="0"/>
+              <stop offset="0.2" stop-color="currentColor" stop-opacity="1"/>
+              <stop offset="0.8" stop-color="currentColor" stop-opacity="1"/>
+              <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M30,30 C45,70 25,110 40,165" stroke="url(#clawFadeLogo)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M85,10 C105,55 75,120 100,190" stroke="url(#clawFadeLogo)" stroke-width="12" stroke-linecap="round"/>
+          <path d="M145,25 C165,65 140,115 160,175" stroke="url(#clawFadeLogo)" stroke-width="8" stroke-linecap="round"/>
+        </svg>
+        <div class="logo">RAHHH</div>
+      </div>
       <div id="status" class="status stopped">
         ● Bot Stopped
       </div>
@@ -65,6 +80,19 @@
           </div>
 
           <div id="toggleBotGlow">
+            <svg class="hero-claw" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="clawFadeHero" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="currentColor" stop-opacity="0"/>
+                  <stop offset="0.2" stop-color="currentColor" stop-opacity="1"/>
+                  <stop offset="0.8" stop-color="currentColor" stop-opacity="1"/>
+                  <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M30,30 C45,70 25,110 40,165" stroke="url(#clawFadeHero)" stroke-width="7" stroke-linecap="round"/>
+              <path d="M85,10 C105,55 75,120 100,190" stroke="url(#clawFadeHero)" stroke-width="12" stroke-linecap="round"/>
+              <path d="M145,25 C165,65 140,115 160,175" stroke="url(#clawFadeHero)" stroke-width="8" stroke-linecap="round"/>
+            </svg>
             <canvas id="toggleBotSpecular" aria-hidden="true"></canvas>
             <button id="toggleBot" class="power-btn">
               ⏻ Start Bot
@@ -466,7 +494,16 @@
             <div class="sr-queue-col">
               <div class="snacks-header">
                 <h2>Check-In Points</h2>
-                <span class="list-count" id="snacksCount">0</span>
+                <span class="list-count checkin-count">
+                  <svg class="paw-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <ellipse cx="12" cy="16.2" rx="6.4" ry="5.1"/>
+                    <ellipse cx="4.8" cy="8.2" rx="2.3" ry="3"/>
+                    <ellipse cx="9.6" cy="4.6" rx="2.3" ry="3"/>
+                    <ellipse cx="14.6" cy="4.6" rx="2.3" ry="3"/>
+                    <ellipse cx="19.4" cy="8.2" rx="2.3" ry="3"/>
+                  </svg>
+                  <span id="snacksCount">0</span>
+                </span>
                 <input id="snacksSearch" class="snacks-search" placeholder="Search user...">
                 <button id="addSnackUser" class="logs-clear-btn">+ Add</button>
                 <button id="refreshSnacks" class="logs-clear-btn">Refresh</button>
@@ -697,7 +734,20 @@
           </div>
 
           <div class="sr-queue-col">
-            <div class="commands-header">
+            <div class="commands-header queue-header-claw">
+              <svg class="queue-claw" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="clawFadeQueue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="currentColor" stop-opacity="0"/>
+                    <stop offset="0.2" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="0.8" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M30,30 C45,70 25,110 40,165" stroke="url(#clawFadeQueue)" stroke-width="7" stroke-linecap="round"/>
+                <path d="M85,10 C105,55 75,120 100,190" stroke="url(#clawFadeQueue)" stroke-width="12" stroke-linecap="round"/>
+                <path d="M145,25 C165,65 140,115 160,175" stroke="url(#clawFadeQueue)" stroke-width="8" stroke-linecap="round"/>
+              </svg>
               <h2>Queue</h2>
               <span class="list-count" id="songQueueCount">0</span>
               <button type="button" id="refreshSongQueue" class="logs-clear-btn">Refresh</button>
