@@ -110,9 +110,10 @@ input[type="number"] {
     margin-bottom: 18px;
 }
 
-/* The claw-mark signature — reused once more, larger, behind the power
-   button on the Dashboard (see .hero-claw). Kept to just these two spots
-   so it stays a signature rather than a decoration sprinkled everywhere. */
+/* The claw-mark signature — reused larger behind the Dashboard power
+   button (.hero-claw) and small again on the Song Requests queue header
+   (.queue-claw). Kept to just those spots so it stays a signature rather
+   than a decoration sprinkled everywhere. */
 .logo-claw {
     position: absolute;
     top: -14px;
