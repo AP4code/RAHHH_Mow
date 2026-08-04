@@ -613,6 +613,7 @@ powerGlow = initSpecularBorder(toggleBotGlow, toggleBotSpecularCanvas, {
 // each call so a live accent-color change picks it up), the same red
 // ".power-btn.running" uses once the bot is actually running.
 function setPowerGlowTheme(running) {
+  toggleBotGlow.classList.toggle("running", running);
   if (running) {
     powerGlow.setLineColor("239, 68, 68");
   } else {
