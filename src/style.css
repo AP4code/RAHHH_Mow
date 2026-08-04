@@ -1756,6 +1756,20 @@ textarea::-webkit-scrollbar-thumb:active {
     font-weight: 700;
 }
 
+/* Wordle-only: the small claw-tick that replaces "#" for top-3 ranks (see
+   wordleRankLabel() in main.js). A new standalone class, not a change to
+   .snack-rank/.rank-1/.rank-2/.rank-3 — those stay byte-identical so Daily
+   Check-In's leaderboard (renderSnacks, #snacksList), which shares those
+   classes, is unaffected. Color/opacity aren't set here — the icon's
+   stroke="currentColor" inherits .snack-rank's existing rank color. */
+.wordle-rank-claw {
+    display: inline-block;
+    width: 7px;
+    height: 10px;
+    margin-right: 3px;
+    vertical-align: -1px;
+}
+
 .snack-name {
     flex: 1;
     min-width: 0;

@@ -1872,6 +1872,21 @@ async function loadWordleWins() {
   }
 }
 
+// Ranks 1-3 get a small claw-tick instead of "#" — same curve language as
+// the app's larger claw-mark signature (.logo-claw/.hero-claw/.queue-claw),
+// simplified to one stroke sized for this 30px-wide rank slot. No
+// <linearGradient>/no id here (unlike those three): dense ranking lets
+// multiple rows tie for rank 1 at once, and a per-instance unique id would
+// collide across tied rows. Color/opacity come free from .snack-rank's
+// existing rank-1/2/3 gold/silver/bronze rules via stroke="currentColor".
+const WORDLE_RANK_CLAW_SVG =
+  '<svg class="wordle-rank-claw" viewBox="0 0 44 60" fill="none" aria-hidden="true">' +
+  '<path d="M19,3 C23,17 16,36 22,57" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+
+function wordleRankLabel(rank) {
+  return rank <= 3 ? `${WORDLE_RANK_CLAW_SVG}${rank}` : `#${rank}`;
+}
+
 function renderWordleWins(filter = "") {
   const list = document.getElementById("wordleWinsList");
   const total = Object.keys(wordleWinsData).length;
@@ -1910,7 +1925,7 @@ function renderWordleWins(filter = "") {
     if (rank <= 3) row.classList.add(`rank-${rank}`);
     row.dataset.user = user;
     row.innerHTML = `
-      <span class="snack-rank">#${rank}</span>
+      <span class="snack-rank">${wordleRankLabel(rank)}</span>
       <span class="snack-name">${escapeHtml(user)}</span>
       <span class="snack-count">${count}</span>
       <div class="snack-actions">
