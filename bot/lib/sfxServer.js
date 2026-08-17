@@ -48,6 +48,16 @@ let lastNowPlaying = null;
 
 app.use("/files", express.static(SFX_DIR));
 
+const HEARTBEAT_MS = 15000;
+// SSE comment line (ignored by EventSource) sent periodically so idle
+// connections don't go silent long enough for a proxy in front of this
+// server — e.g. a Cloudflare Tunnel — to time them out and drop the stream.
+function startHeartbeat(res) {
+  return setInterval(() => {
+    try { res.write(": ping\n\n"); } catch (_) {}
+  }, HEARTBEAT_MS);
+}
+
 app.get("/overlay", (req, res) => {
   res.type("html").send(OVERLAY_HTML);
 });
@@ -60,7 +70,11 @@ app.get("/events", (req, res) => {
   });
   res.write("\n");
   clients.add(res);
-  req.on("close", () => clients.delete(res));
+  const heartbeat = startHeartbeat(res);
+  req.on("close", () => {
+    clients.delete(res);
+    clearInterval(heartbeat);
+  });
 });
 
 app.get("/nowplaying", (req, res) => {
@@ -81,7 +95,11 @@ app.get("/nowplaying-events", (req, res) => {
   res.write(
     `data: ${JSON.stringify({ type: "settings", data: { align: safeAlign(songSettingsStore.settings.nowPlayingAlign) } })}\n\n`
   );
-  req.on("close", () => nowPlayingClients.delete(res));
+  const heartbeat = startHeartbeat(res);
+  req.on("close", () => {
+    nowPlayingClients.delete(res);
+    clearInterval(heartbeat);
+  });
 });
 
 app.get("/wordle", (req, res) => {
@@ -101,7 +119,11 @@ app.get("/wordle-events", (req, res) => {
   // reasoning as the Now Playing snapshot above, so switching OBS scenes
   // mid-round doesn't show a blank board until the next guess.
   res.write(`data: ${JSON.stringify(require("./games/wordle").getSnapshot())}\n\n`);
-  req.on("close", () => wordleClients.delete(res));
+  const heartbeat = startHeartbeat(res);
+  req.on("close", () => {
+    wordleClients.delete(res);
+    clearInterval(heartbeat);
+  });
 });
 
 const OVERLAY_HTML = `<!doctype html>
