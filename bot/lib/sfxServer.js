@@ -393,6 +393,18 @@ function start() {
     console.log(`[NOWPLAYING] Browser source URL: http://localhost:${SFX_SERVER_PORT}/nowplaying`);
     console.log(`[WORDLE] Browser source URL: http://localhost:${SFX_SERVER_PORT}/wordle`);
   });
+
+  // listen() emits this asynchronously on bind failure (e.g. EADDRINUSE)
+  // rather than throwing — with no handler it becomes an uncaught
+  // exception that bot.js's global handler just logs once and moves on,
+  // leaving the bot running with no SFX/Now Playing/Wordle overlays and
+  // nothing obviously wrong. The Rust side now checks this port before
+  // ever spawning node (see start_bot), but that's a startup-only check —
+  // this is the actual server, so it's the one place that can catch and
+  // clearly report a bind failure whenever it happens.
+  server.on("error", (err) => {
+    console.error(`[SFX] Failed to start overlay server on port ${SFX_SERVER_PORT}: ${err.code || err.message}. SFX/Now Playing/Wordle overlays will not work until this is resolved and the bot is restarted.`);
+  });
 }
 
 module.exports = {

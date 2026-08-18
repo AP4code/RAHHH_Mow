@@ -1,9 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use std::os::windows::process::CommandExt;
+use std::os::windows::io::AsRawHandle;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use tauri::{Emitter, Manager, WindowEvent};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
@@ -13,8 +14,52 @@ use tauri_plugin_dialog::DialogExt;
 use std::fs;
 use serde_json::Value;
 use std::collections::HashMap;
+use windows::Win32::Foundation::HANDLE;
+use windows::Win32::System::JobObjects::{
+    AssignProcessToJobObject, CreateJobObjectW, SetInformationJobObject,
+    JobObjectExtendedLimitInformation, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+};
 
 static TRAY_NOTICE_SHOWN: AtomicBool = AtomicBool::new(false);
+
+// A Windows Job Object that every spawned bot child process gets assigned
+// to, with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE set. Windows does NOT kill
+// child processes when a parent exits — not on a normal exit, and not on a
+// crash or a Task Manager force-kill either — so without this, a node.exe
+// spawned by start_bot survives the Tauri app dying by any means other than
+// the app's own clean-shutdown paths (tray Quit, stop_bot), and keeps
+// squatting on the SFX port forever. The OS closes every handle a process
+// holds when that process ends for ANY reason, and this job object's
+// KILL_ON_JOB_CLOSE flag means that handle closing is itself what kills the
+// child — a guarantee no amount of "kill it in the close handler" call
+// sites can provide, since none of them run on a crash.
+// HANDLE wraps a raw pointer, so it isn't Send/Sync and can't live in a
+// static directly — stored as the bare pointer value instead (a job object
+// handle is just an opaque, thread-safe-to-share identifier as far as the
+// Windows API calls below are concerned; nothing here ever dereferences it
+// as a pointer) and rewrapped into a HANDLE at each use site.
+static BOT_JOB: OnceLock<isize> = OnceLock::new();
+
+fn bot_job_object() -> HANDLE {
+    let raw = *BOT_JOB.get_or_init(|| unsafe {
+        let job = CreateJobObjectW(None, None).expect("CreateJobObjectW failed");
+
+        let mut info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+
+        SetInformationJobObject(
+            job,
+            JobObjectExtendedLimitInformation,
+            &info as *const _ as *const std::ffi::c_void,
+            std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+        )
+        .expect("SetInformationJobObject failed");
+
+        job.0 as isize
+    });
+    HANDLE(raw as *mut std::ffi::c_void)
+}
 
 struct BotState {
     process: Mutex<Option<Child>>,
@@ -109,8 +154,8 @@ fn start_bot(app: tauri::AppHandle, state: tauri::State<BotState>) -> Result<(),
 
     if std::net::TcpListener::bind(("127.0.0.1", sfx_port)).is_err() {
         return Err(format!(
-            "Port {} is already in use by another process — likely a leftover bot instance from a previous run that didn't shut down cleanly. Close it in Task Manager (look for a stray node.exe) or restart your PC, then try again.",
-            sfx_port
+            "Port {} is already in use by another process, so the bot's SFX/overlay server won't be able to start. Find what's using it: open a terminal and run `netstat -ano | findstr :{}` — the last column is the process ID (PID); look that PID up in Task Manager's Details tab before closing it, since it isn't necessarily this app's own process. Then try starting the bot again.",
+            sfx_port, sfx_port
         ));
     }
 
@@ -123,6 +168,21 @@ fn start_bot(app: tauri::AppHandle, state: tauri::State<BotState>) -> Result<(),
     .creation_flags(0x08000000) // ← hides terminal window
     .spawn()
     .map_err(|e| format!("Failed to spawn node: {}", e))?;
+
+    // Ties the child's lifetime to this app's process at the OS level — see
+    // bot_job_object's doc comment for why this (not any call-site "kill it
+    // on close" logic) is the thing that actually prevents an orphaned
+    // node.exe surviving a crash/force-kill/update and squatting on the SFX
+    // port forever. Failure here isn't fatal to starting the bot — it just
+    // means this particular launch won't get the crash-safety guarantee —
+    // so it's logged rather than aborting an otherwise-working start.
+    unsafe {
+        let job = bot_job_object();
+        let process_handle = HANDLE(child.as_raw_handle() as *mut std::ffi::c_void);
+        if let Err(e) = AssignProcessToJobObject(job, process_handle) {
+            eprintln!("Failed to assign bot process to job object (crash-safety cleanup won't apply this run): {}", e);
+        }
+    }
 
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
