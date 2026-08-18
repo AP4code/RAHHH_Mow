@@ -58,6 +58,21 @@ function startHeartbeat(res) {
   }, HEARTBEAT_MS);
 }
 
+// A proxy in front of this server (e.g. a Cloudflare Tunnel) can buffer a
+// chunked response until enough *incompressible* output has gone by before
+// it starts actually streaming bytes to the client — an SSE connection's
+// real messages are only a few bytes each, so without this every one of
+// them (even the heartbeat above) sits stuck in that buffer forever. A
+// bisection against Cloudflare's edge found the threshold needs well north
+// of 32KB of random data (32KB wasn't enough, 64KB was), so this pads
+// generously past that on connect rather than shaving it close and risking
+// it silently stop working again on a slightly different connection/region.
+// No-op cost-wise for plain localhost use — one extra one-time write.
+const SSE_PADDING = ": " + require("crypto").randomBytes(65536).toString("hex") + "\n\n";
+function writeSseHead(res) {
+  res.write(SSE_PADDING);
+}
+
 app.get("/overlay", (req, res) => {
   res.type("html").send(OVERLAY_HTML);
 });
@@ -69,6 +84,7 @@ app.get("/events", (req, res) => {
     Connection: "keep-alive",
   });
   res.write("\n");
+  writeSseHead(res);
   clients.add(res);
   const heartbeat = startHeartbeat(res);
   req.on("close", () => {
@@ -88,6 +104,7 @@ app.get("/nowplaying-events", (req, res) => {
     Connection: "keep-alive",
   });
   res.write("\n");
+  writeSseHead(res);
   nowPlayingClients.add(res);
   // Send whatever's already known immediately, so a freshly-opened OBS
   // browser source doesn't sit empty until the next 3s poll tick.
@@ -113,6 +130,7 @@ app.get("/wordle-events", (req, res) => {
     Connection: "keep-alive",
   });
   res.write("\n");
+  writeSseHead(res);
   wordleClients.add(res);
   // Lazy require — dodges caring which of sfxServer.js/games/wordle.js bot.js
   // happens to require first. Sends the current board immediately, same
