@@ -54,6 +54,26 @@ fn get_root(app: &tauri::AppHandle) -> PathBuf {
     cwd
 }
 
+// Reads a single KEY=value out of config/.env without building the whole
+// file into a map — for callers (like start_bot) that need one value and
+// aren't the (async, #[tauri::command]-only) load_env.
+fn read_env_value(root: &PathBuf, key: &str) -> Option<String> {
+    let env_path = root.join("config").join(".env");
+    let content = fs::read_to_string(&env_path).ok()?;
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if let Some((k, v)) = line.split_once('=') {
+            if k.trim() == key {
+                return Some(v.trim().to_string());
+            }
+        }
+    }
+    None
+}
+
 #[tauri::command]
 fn start_bot(app: tauri::AppHandle, state: tauri::State<BotState>) -> Result<(), String> {
     let mut lock = state.process.lock().unwrap();
@@ -72,6 +92,26 @@ fn start_bot(app: tauri::AppHandle, state: tauri::State<BotState>) -> Result<(),
 
     if !node_path.exists() {
     return Err(format!("Node executable not found at {:?}", node_path));
+    }
+
+    // bot.js's own SFX/Now Playing/Wordle server binds this port, but it
+    // swallows a bind failure into its own log stream rather than crashing
+    // the process — so a stale process left over from a prior run that
+    // didn't shut down cleanly (crash, force-kill, update overwrite) can
+    // silently squat on the port forever, and every symptom shows up three
+    // layers away (no sound, no overlay) with nothing pointing back at the
+    // real cause. Catching it here, before the child even spawns, turns
+    // that into one clear, immediate error instead of a fresh investigation
+    // each time.
+    let sfx_port = read_env_value(&root, "SFX_SERVER_PORT")
+        .and_then(|v| v.parse::<u16>().ok())
+        .unwrap_or(8420);
+
+    if std::net::TcpListener::bind(("127.0.0.1", sfx_port)).is_err() {
+        return Err(format!(
+            "Port {} is already in use by another process — likely a leftover bot instance from a previous run that didn't shut down cleanly. Close it in Task Manager (look for a stray node.exe) or restart your PC, then try again.",
+            sfx_port
+        ));
     }
 
     let mut child = Command::new(node_path)

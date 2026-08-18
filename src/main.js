@@ -904,6 +904,25 @@ toggleBtn.onclick = async () => {
     refreshDashboard();
   } catch (err) {
     console.error(err);
+
+    // start_bot/stop_bot rejections used to vanish into the console only —
+    // in a release build there's no devtools to see them, so the button
+    // just looked permanently broken with zero explanation. Surface it and
+    // reset the UI back to a clickable state instead of leaving it stuck.
+    botRunning = false;
+    botStarting = false;
+    setPowerGlowTheme(false);
+
+    toggleBtn.textContent = "⏻ Start Bot";
+    toggleBtn.disabled = false;
+    toggleBtn.style.opacity = 1;
+    toggleBtn.classList.remove("running");
+
+    statusEl.textContent = "● Bot Stopped";
+    statusEl.classList.remove("running");
+    statusEl.classList.add("stopped");
+
+    alert("Couldn't start/stop the bot:\n" + err);
   }
 };
 
