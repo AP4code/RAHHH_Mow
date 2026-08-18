@@ -1,11 +1,13 @@
 const state = require("./state");
-const { botToken, streamerToken, helix } = require("./auth");
+const { botToken, streamerToken, modToken, helix } = require("./auth");
 
 /* ------------------------------------------------------------------ */
-/* sending chat — bot account by default (sendChat/sendBotMessage),      */
-/* or the streamer's own account (sendStreamerChat, used by the Daily    */
-/* Check-In redemption so the confirmation reads as coming from the      */
-/* broadcaster, not the bot).                                          */
+/* sending chat — bot account by default (sendChat/sendBotMessage), the  */
+/* streamer's own account (sendStreamerChat, used by the Daily Check-In  */
+/* redemption so the confirmation reads as coming from the broadcaster,  */
+/* not the bot), or the mod account (sendModChat). sendAs() picks one of */
+/* the three by string, for commands/redeems whose sender is a saved     */
+/* per-item setting rather than hardcoded at the call site.              */
 /* ------------------------------------------------------------------ */
 
 const MAX_CHAT_LEN = 500;
@@ -128,8 +130,38 @@ async function sendStreamerChat(text, replyTo = null) {
   }
 }
 
+/**
+ * Same shape as sendChat, but sent as the mod account — requires
+ * user:write:chat on the mod token (added alongside clips:edit; a mod
+ * token connected before this scope was added will 401/403 until
+ * reconnected via the Settings "Connect Mod Account" button).
+ */
+async function sendModChat(text, replyTo = null) {
+  for (const chunk of splitMessage(text)) {
+    const body = {
+      broadcaster_id: state.broadcasterId,
+      sender_id: state.modUserId,
+      message: chunk,
+    };
+    if (replyTo) body.reply_parent_message_id = replyTo;
+
+    await enqueueSend("mod", () => postChatMessage(modToken, body));
+    replyTo = null;
+  }
+}
+
 function getLastBotMessage() {
   return lastBotMessage;
 }
 
-module.exports = { sendChat, sendBotMessage, sendStreamerChat, getLastBotMessage, splitMessage };
+// Dispatches to the right sender by the "sendAs" value saved on a command
+// or redeem ("bot" | "streamer" | "mod") — falls back to the bot account
+// for anything else, which covers both the default and commands/redeems
+// saved before this setting existed (no sendAs field at all).
+function sendAs(account, text, replyTo = null) {
+  if (account === "streamer") return sendStreamerChat(text, replyTo);
+  if (account === "mod") return sendModChat(text, replyTo);
+  return sendBotMessage(text, replyTo);
+}
+
+module.exports = { sendChat, sendBotMessage, sendStreamerChat, sendModChat, sendAs, getLastBotMessage, splitMessage };

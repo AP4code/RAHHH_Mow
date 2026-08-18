@@ -3,7 +3,7 @@ const redeemsStore = require("../lib/persistence/redeems");
 const snacksStore = require("../lib/persistence/snacks");
 const { applyCounterAction } = require("../lib/counters");
 const { fillTemplate } = require("../lib/templateFill");
-const { sendBotMessage } = require("../lib/chat");
+const { sendAs } = require("../lib/chat");
 const { updateRedemptionStatus } = require("../lib/twitchRewards");
 const { getSubTier } = require("../lib/subscriptions");
 const sfxServer = require("../lib/sfxServer");
@@ -85,7 +85,7 @@ async function runAction(cfg, event) {
   if (cfg.action === "counter") {
     if (!cfg.counter) return;
     vars.value = applyCounterAction(cfg.counter, cfg.counterAction, cfg.step ?? 1);
-    await sendBotMessage(fillTemplate(cfg.template || "{value}", vars));
+    await sendAs(cfg.sendAs, fillTemplate(cfg.template || "{value}", vars));
     return;
   }
 
@@ -102,14 +102,14 @@ async function runAction(cfg, event) {
     snacksStore.save();
 
     vars.value = value;
-    await sendBotMessage(fillTemplate(cfg.snackTemplate || "{user} now has {value} Smoky snack(s)!", vars));
+    await sendAs(cfg.sendAs, fillTemplate(cfg.snackTemplate || "{user} now has {value} Smoky snack(s)!", vars));
     return;
   }
 
   // default: "message"
   const replies = Array.isArray(cfg.replies) && cfg.replies.length ? cfg.replies : [""];
   const text = replies[Math.floor(Math.random() * replies.length)];
-  await sendBotMessage(fillTemplate(text, vars));
+  await sendAs(cfg.sendAs, fillTemplate(text, vars));
 }
 
 async function handleRedemption(event) {

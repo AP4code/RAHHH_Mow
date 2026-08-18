@@ -7,5 +7,6 @@ module.exports = {
   broadcasterDisplayName: null, // properly-cased, e.g. "MissMeowZaki" — for user-facing text like !time
   botUserId: null,
   botLogin: null, // cheesybot's login, lowercased
+  modUserId: null,
   modLogin: null, // smoothcheese01's login, lowercased
 };

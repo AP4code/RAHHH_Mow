@@ -879,6 +879,16 @@
             </div>
             <input type="hidden" id="cmdCooldownMode" value="none">
           </div>
+
+          <div class="settings-field">
+            <label for="cmdSendAs">Send chat as</label>
+            <select id="cmdSendAs">
+              <option value="bot">Bot</option>
+              <option value="streamer">Broadcaster</option>
+              <option value="mod">Mod</option>
+            </select>
+            <span class="field-hint">Which account's name this command's reply appears under in chat. Mod requires reconnecting the Mod account (Settings) if it was connected before this option existed.</span>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -1049,6 +1059,16 @@
               <input id="redeemCooldownSeconds" type="number" min="1" value="10" placeholder="seconds" style="display:none;">
             </div>
             <input type="hidden" id="redeemCooldownMode" value="none">
+          </div>
+
+          <div class="settings-field">
+            <label for="redeemSendAs">Send chat as</label>
+            <select id="redeemSendAs">
+              <option value="bot">Bot</option>
+              <option value="streamer">Broadcaster</option>
+              <option value="mod">Mod</option>
+            </select>
+            <span class="field-hint">Which account's name this redeem's reply appears under in chat. Mod requires reconnecting the Mod account (Settings) if it was connected before this option existed.</span>
           </div>
 
           <div class="settings-field" id="redeemSfxQueueNote" style="display:none;">

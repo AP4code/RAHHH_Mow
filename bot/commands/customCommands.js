@@ -1,5 +1,5 @@
 const store = require("../lib/persistence/customCommands");
-const { sendBotMessage } = require("../lib/chat");
+const { sendAs } = require("../lib/chat");
 const { TARGET_CHANNEL_LOGIN } = require("../lib/env");
 const { fillTemplate } = require("../lib/templateFill");
 const { applyCounterAction } = require("../lib/counters");
@@ -117,7 +117,7 @@ async function handleReply(cmd, ctx) {
   const replies = Array.isArray(cmd.replies) && cmd.replies.length ? cmd.replies : [""];
   const text = replies[Math.floor(Math.random() * replies.length)];
   const vars = { user: ctx.login, channel: TARGET_CHANNEL_LOGIN, args: extractArgs(cmd, ctx) };
-  await sendBotMessage(fillTemplate(text, vars));
+  await sendAs(cmd.sendAs, fillTemplate(text, vars));
 }
 
 async function handleCounter(cmd, ctx) {
@@ -125,7 +125,7 @@ async function handleCounter(cmd, ctx) {
 
   const value = applyCounterAction(cmd.counter, cmd.action, cmd.step ?? 1);
   const vars = { user: ctx.login, channel: TARGET_CHANNEL_LOGIN, value, args: extractArgs(cmd, ctx) };
-  await sendBotMessage(fillTemplate(cmd.template || "{value}", vars));
+  await sendAs(cmd.sendAs, fillTemplate(cmd.template || "{value}", vars));
 }
 
 module.exports = {

@@ -137,14 +137,16 @@ process.on("SIGINT", () => {
   state.broadcasterId = streamerSelf.id;
   state.broadcasterDisplayName = streamerSelf.display_name || streamerSelf.login;
   state.botLogin = botSelf.login.toLowerCase();
+  state.modUserId = modSelf.id;
   state.modLogin = modSelf.login.toLowerCase();
 
   auth.cacheUserId(botSelf.login, botSelf.id);
   auth.cacheUserId(streamerSelf.login, streamerSelf.id);
+  auth.cacheUserId(modSelf.login, modSelf.id);
 
   console.log(`[TWITCH] Bot (chat): ${botSelf.login} (${state.botUserId})`);
   console.log(`[TWITCH] Streamer (shoutouts + lookups): ${streamerSelf.login} (${state.broadcasterId})`);
-  console.log(`[TWITCH] Mod (clips only): ${modSelf.login} (${modSelf.id})`);
+  console.log(`[TWITCH] Mod (clips + optional command/redeem chat): ${modSelf.login} (${modSelf.id})`);
 
   if (streamerSelf.login.toLowerCase() !== TARGET_CHANNEL_LOGIN.toLowerCase()) {
     console.warn(

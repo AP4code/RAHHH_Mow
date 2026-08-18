@@ -1285,7 +1285,7 @@ document.getElementById("connectBot").onclick = (e) =>
 
 document.getElementById("connectMod").onclick = (e) =>
   connectTwitchAccount(
-    "clips:edit",
+    "clips:edit user:write:chat",
     "MOD_USER_ACCESS_TOKEN", "MOD_REFRESH_TOKEN",
     "userToken", "refreshToken",
     "modConnectStatus", e.currentTarget,
@@ -2401,6 +2401,7 @@ const cmdSfxVolume = document.getElementById("cmdSfxVolume");
 const cmdPermissionChecks = document.getElementById("cmdPermissionChecks");
 const cmdCooldownMode = document.getElementById("cmdCooldownMode");
 const cmdCooldownSeconds = document.getElementById("cmdCooldownSeconds");
+const cmdSendAs = document.getElementById("cmdSendAs");
 
 let currentCommandType = "reply";
 let pendingCmdSfxPath = null; // absolute path of a freshly-picked file, staged until save
@@ -2630,6 +2631,7 @@ function openCommandForm(existingCmd = null) {
   setCheckedPermissions(existingCmd ? normalizePermissions(existingCmd) : ["everyone"]);
   cmdCooldownSeconds.value = existingCmd?.cooldown?.seconds || 10;
   setCooldownMode("cmdCooldownToggle", "cmdCooldownMode", "cmdCooldownSeconds", existingCmd?.cooldown?.mode || "none");
+  cmdSendAs.value = existingCmd?.sendAs || "bot";
 
   cmdSfxEnabled.checked = Boolean(existingCmd?.sfxFile);
   cmdSfxFields.style.display = cmdSfxEnabled.checked ? "" : "none";
@@ -2741,6 +2743,7 @@ document.getElementById("commandFormSave").onclick = async () => {
   cmd.permissions = getCheckedPermissions();
   delete cmd.permission;
   cmd.cooldown = cooldown;
+  cmd.sendAs = cmdSendAs.value;
 
   if (currentCommandType === "counter") {
     cmd.counter = cmdCounterName.value.trim();
@@ -2986,6 +2989,7 @@ const redeemCooldownMode = document.getElementById("redeemCooldownMode");
 const redeemCooldownSeconds = document.getElementById("redeemCooldownSeconds");
 const redeemSfxQueueNote = document.getElementById("redeemSfxQueueNote");
 const redeemConfigEnabled = document.getElementById("redeemConfigEnabled");
+const redeemSendAs = document.getElementById("redeemSendAs");
 
 function getCheckedMinTiers() {
   return Array.from(redeemMinTierChecks.querySelectorAll('input[type="checkbox"]:checked')).map((cb) => parseInt(cb.value, 10));
@@ -3149,6 +3153,7 @@ function openRedeemForm(reward = null) {
   setCooldownMode("redeemCooldownToggle", "redeemCooldownMode", "redeemCooldownSeconds", cfg?.cooldown?.mode || "none");
 
   redeemConfigEnabled.checked = cfg ? cfg.enabled !== false : true;
+  redeemSendAs.value = cfg?.sendAs || "bot";
 
   updateSkipQueueWarningVisibility();
 
@@ -3183,6 +3188,7 @@ async function buildRedeemConfig() {
       seconds: redeemCooldownMode.value === "none" ? 0 : parseInt(redeemCooldownSeconds.value, 10) || 0,
     },
     enabled: redeemConfigEnabled.checked,
+    sendAs: redeemSendAs.value,
   };
 
   if (currentRedeemAction === "counter") {
