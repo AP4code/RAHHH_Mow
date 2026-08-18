@@ -2442,7 +2442,8 @@ textarea::-webkit-scrollbar-thumb:active {
     border-color: var(--accent);
 }
 
-.modal .settings-field input {
+.modal .settings-field input,
+.modal .settings-field select {
     width: 100%;
     padding: 9px 12px;
     border-radius: 8px;
@@ -2452,9 +2453,11 @@ textarea::-webkit-scrollbar-thumb:active {
     font-size: 13px;
     outline: none;
     transition: border-color 0.15s;
+    font-family: inherit;
 }
 
-.modal .settings-field input:focus {
+.modal .settings-field input:focus,
+.modal .settings-field select:focus {
     border-color: var(--accent);
 }
 

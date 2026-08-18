@@ -1,6 +1,6 @@
 const settingsStore = require("../lib/persistence/checkInSettings");
 const snacksStore = require("../lib/persistence/snacks");
-const { sendStreamerChat } = require("../lib/chat");
+const { sendAs } = require("../lib/chat");
 const { fillTemplate } = require("../lib/templateFill");
 const { updateRedemptionStatus } = require("../lib/twitchRewards");
 
@@ -10,11 +10,10 @@ const { updateRedemptionStatus } = require("../lib/twitchRewards");
 /* reasoning as Song Requests: there's only ever one reward that can      */
 /* trigger a check-in, chosen on the dedicated Daily Check-In tab.        */
 /*                                                                     */
-/* The confirmation is sent as the STREAMER's own account (sendStreamer  */
-/* Chat), not the bot — this replaces the old passive mechanism that     */
-/* used to mirror some other bot's chat announcement instead of owning   */
-/* the data itself (see the now-removed maybeRecordUpdate in             */
-/* lib/persistence/snacks.js).                                          */
+/* The confirmation's sender account (settings.sendAs) is streamer by     */
+/* default — this replaces the old passive mechanism that used to mirror  */
+/* some other bot's chat announcement instead of owning the data itself   */
+/* (see the now-removed maybeRecordUpdate in lib/persistence/snacks.js). */
 /* ------------------------------------------------------------------ */
 
 async function handleCheckInRedemption(event) {
@@ -42,8 +41,8 @@ async function handleCheckInRedemption(event) {
   const vars = { user: login, value };
   const line1 = settings.message || "{user} has checked in! Thank you for being here! <3";
   const line2 = settings.message2 || "{user} now has {value} delicious Smoky snack(s)!";
-  await sendStreamerChat(fillTemplate(line1, vars));
-  await sendStreamerChat(fillTemplate(line2, vars));
+  await sendAs(settings.sendAs || "streamer", fillTemplate(line1, vars));
+  await sendAs(settings.sendAs || "streamer", fillTemplate(line2, vars));
 }
 
 module.exports = { handleCheckInRedemption };

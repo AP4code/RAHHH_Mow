@@ -1522,6 +1522,7 @@ async function loadCheckInSettings() {
     document.getElementById("ciPointsPerCheckIn").value = settings.pointsPerCheckIn || 1;
     document.getElementById("ciMessage").value = settings.message || "";
     document.getElementById("ciMessage2").value = settings.message2 || "";
+    document.getElementById("ciSendAs").value = settings.sendAs || "streamer";
     checkInPendingRedeemId = settings.redeemId || "";
   } catch (err) {
     console.error(err);
@@ -1560,6 +1561,7 @@ document.getElementById("saveCheckInSettings").onclick = async () => {
       pointsPerCheckIn: parseInt(document.getElementById("ciPointsPerCheckIn").value, 10) || 1,
       message: document.getElementById("ciMessage").value.trim(),
       message2: document.getElementById("ciMessage2").value.trim(),
+      sendAs: document.getElementById("ciSendAs").value,
     };
     await invoke("save_list", { name: "checkInSettings", content: settings });
     btn.textContent = "Saved!";

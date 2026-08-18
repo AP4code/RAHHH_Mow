@@ -485,7 +485,15 @@
                 <div class="settings-field">
                   <label for="ciMessage2">Chat message (2nd line)</label>
                   <input id="ciMessage2" placeholder="{user} now has {value} delicious Smoky snack(s)!">
-                  <span class="field-hint">Sent as two separate messages, back to back. Placeholders: {user}, {value} (their new point total). Sent from your own (streamer) account, not the bot.</span>
+                  <span class="field-hint">Sent as two separate messages, back to back. Placeholders: {user}, {value} (their new point total).</span>
+                </div>
+                <div class="settings-field">
+                  <label for="ciSendAs">Send chat as</label>
+                  <select id="ciSendAs">
+                    <option value="bot">Bot</option>
+                    <option value="streamer">Broadcaster</option>
+                    <option value="mod">Mod</option>
+                  </select>
                 </div>
                 <button type="button" id="saveCheckInSettings" class="primary">Save Settings</button>
               </div>
@@ -887,7 +895,6 @@
               <option value="streamer">Broadcaster</option>
               <option value="mod">Mod</option>
             </select>
-            <span class="field-hint">Which account's name this command's reply appears under in chat. Mod requires reconnecting the Mod account (Settings) if it was connected before this option existed.</span>
           </div>
         </div>
 
@@ -1068,7 +1075,6 @@
               <option value="streamer">Broadcaster</option>
               <option value="mod">Mod</option>
             </select>
-            <span class="field-hint">Which account's name this redeem's reply appears under in chat. Mod requires reconnecting the Mod account (Settings) if it was connected before this option existed.</span>
           </div>
 
           <div class="settings-field" id="redeemSfxQueueNote" style="display:none;">

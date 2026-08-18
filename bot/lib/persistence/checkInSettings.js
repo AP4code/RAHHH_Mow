@@ -19,6 +19,11 @@ const DEFAULTS = {
   // sending from rahhh itself doesn't change what viewers actually see.
   message: "{user} has checked in! Thank you for being here! <3",
   message2: "{user} now has {value} delicious Smoky snack(s)!",
+  // "streamer" preserves original behavior for anyone who saved settings
+  // before this existed — check-in always sent as the broadcaster, never
+  // the bot, so that stays the default rather than switching to "bot" like
+  // commands/redeems (which never had a prior fixed sender to preserve).
+  sendAs: "streamer",
 };
 
 // Stable object reference (never reassigned) — same reasoning as
